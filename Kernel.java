@@ -6,7 +6,11 @@ public class Kernel {
         scheduler = new Scheduler();
     }
 
-    public int CreateProcess(UserlandProcess up) {
-        return scheduler.CreateProcess(up);
+    public int CreateProcess(UserlandProcess up, OS.Priority priority, boolean callSleep) {
+        return scheduler.CreateProcess(up,priority,callSleep);
+    }
+
+    public void Sleep(int milliseconds) {
+        scheduler.Sleep(milliseconds);
     }
 }

@@ -4,10 +4,15 @@ public class KernelandProcess {
     private int pid;
     private boolean thread_started = false;
     private Thread thread;
+    private int wake_up_time;
+    private OS.Priority priority;
+    private boolean callsSleep = false;
 
-    public KernelandProcess(UserlandProcess up) {
+    public KernelandProcess(UserlandProcess up, OS.Priority input_priority, boolean callSleep) {
         thread = new Thread(up);
         pid = (int)thread.getId();
+        priority = input_priority;
+        callsSleep = callSleep;
     }
 
     public void stop() {
@@ -31,6 +36,26 @@ public class KernelandProcess {
 
     public boolean isRunning() {
         return thread.isAlive();
+    }
+
+    public int getWakeUpTime() {
+        return wake_up_time;
+    }
+
+    public void setWakeUpTime(int input_wake_up_time) {
+        wake_up_time = input_wake_up_time;
+    }
+
+    public OS.Priority getPriority() {
+        return priority;
+    }
+
+    public void setPriority(OS.Priority input_priority) {
+        priority = input_priority;
+    }
+
+    public boolean callsSleep() {
+        return callsSleep;
     }
 
     public void run() {
