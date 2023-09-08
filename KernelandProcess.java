@@ -7,12 +7,16 @@ public class KernelandProcess {
     private int wake_up_time;
     private OS.Priority priority;
     private boolean callsSleep = false;
+    private int[] VFS_ID_Array = new int[10];
 
     public KernelandProcess(UserlandProcess up, OS.Priority input_priority, boolean callSleep) {
         thread = new Thread(up);
         pid = (int)thread.getId();
         priority = input_priority;
         callsSleep = callSleep;
+        for (int i = 0; i < VFS_ID_Array.length; i++) {
+            VFS_ID_Array[i] = -1;
+        }
     }
 
     public void stop() {
@@ -56,6 +60,14 @@ public class KernelandProcess {
 
     public boolean callsSleep() {
         return callsSleep;
+    }
+
+    public int[] get_VFS_ID_Array() {
+        return VFS_ID_Array;
+    }
+
+    public void set_VFS_ID_Array(int[] inputArray) {
+        VFS_ID_Array = inputArray;
     }
 
     public void run() {

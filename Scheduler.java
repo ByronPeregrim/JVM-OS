@@ -18,6 +18,7 @@ public class Scheduler {
     private boolean processRunning = false;
     private Random rand = new Random();
     private int demotionCounter = 0;
+    private Kernel kernel;
 
     private class Interrupt extends TimerTask {
         public Interrupt() {
@@ -87,6 +88,14 @@ public class Scheduler {
                 if (!processList.get(i).isDone()) {
                     processList.add(processList.size(),processList.get(i));
                     processList.remove(i);
+                }
+                else {
+                    int[] open_device_IDs = processList.get(i).get_VFS_ID_Array();
+                    for (int j = 0; j < open_device_IDs.length; j++) {
+                        if (open_device_IDs[j] != -1) {
+                            kernel.Close(open_device_IDs[j]);
+                        }
+                    }
                 }
             }
         }
@@ -240,4 +249,7 @@ public class Scheduler {
         }
     }
 
+    public KernelandProcess getCurrentlyRunning() {
+        return currentProcess;
+    }
 }

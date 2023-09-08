@@ -1,10 +1,10 @@
 import java.util.Random;
 
 public class RandomDevice implements Device {
+    private Random[] randomArray = new Random[10];
 
-    Random[] randomArray = new Random[10];
-    RandomDevice() {
-
+    public RandomDevice() {
+        
     }
 
     public int Open(String string) {
@@ -12,6 +12,7 @@ public class RandomDevice implements Device {
         if (string != null && string != "") {
             int seed = Integer.parseInt(string);
             Random newRandom = new Random(seed);
+            // Places new Random device into first open spot in the array
             for (i = 0; i < randomArray.length; i++) {
                 if (randomArray[i] == null) {
                     randomArray[i] = newRandom;
@@ -28,7 +29,8 @@ public class RandomDevice implements Device {
 
     public byte[] Read(int id, int size) {
         byte[] array = new byte[size];
-        Random rand = new Random();
+        Random rand = randomArray[id];
+        // Fill array with random bytes
         rand.nextBytes(array);
         return array;
     }
@@ -38,6 +40,8 @@ public class RandomDevice implements Device {
     }
 
     public void Seek(int id, int to) {
-        Random currentRandom = randomArray[to];
+        for (int i = id; i < to; i++) {
+            Random currentRandom = randomArray[i];
+        }
     }
 }
