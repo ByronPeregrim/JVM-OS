@@ -1,31 +1,36 @@
+import java.util.LinkedList;
+
 public class KernelandProcess {
 
     private static int nextpid;
-    private int pid;
+    private int PID;
     private boolean thread_started = false;
     private Thread thread;
-    private int wake_up_time;
+    private int wakeUpTime;
     private OS.Priority priority;
     private boolean callsSleep = false;
     private int[] VFS_ID_Array = new int[10];
+    private String name;
+    private LinkedList<KernelMessage> messageQueue = new LinkedList<KernelMessage>();
 
     public KernelandProcess(UserlandProcess up, OS.Priority input_priority, boolean callSleep) {
         thread = new Thread(up);
-        pid = (int)thread.getId();
+        PID = (int)thread.getId();
         priority = input_priority;
-        callsSleep = callSleep;
+        callsSleep = callSleep; //if true, Process calls sleep function
         for (int i = 0; i < VFS_ID_Array.length; i++) {
             VFS_ID_Array[i] = -1;
         }
+        name = up.getClass().getSimpleName();
     }
 
-    public void stop() {
+    public void Stop() {
         if (thread_started) {
             thread.suspend();
         }
     }
 
-    public boolean isDone() {
+    public boolean IsDone() {
         if (thread_started == true && !thread.isAlive()) {
             return true;
         }
@@ -34,40 +39,57 @@ public class KernelandProcess {
         }
     }
 
-    public int getPid() {
-        return pid;
+    public int GetPID() {
+        return PID;
     }
 
-    public boolean isRunning() {
+    public String GetName() {
+        return name;
+    }
+
+    public boolean IsRunning() {
         return thread.isAlive();
     }
 
-    public int getWakeUpTime() {
-        return wake_up_time;
+    public int GetWakeUpTime() {
+        return wakeUpTime;
     }
 
-    public void setWakeUpTime(int input_wake_up_time) {
-        wake_up_time = input_wake_up_time;
+    public void SetWakeUpTime(int wakeUpTime) {
+        this.wakeUpTime = wakeUpTime;
     }
 
-    public OS.Priority getPriority() {
+    public OS.Priority GetPriority() {
         return priority;
     }
 
-    public void setPriority(OS.Priority input_priority) {
-        priority = input_priority;
+    public void SetPriority(OS.Priority priority) {
+        this.priority = priority;
     }
 
-    public boolean callsSleep() {
+    public boolean CallsSleep() {
         return callsSleep;
     }
 
-    public int[] get_VFS_ID_Array() {
+    public int[] Get_VFS_ID_Array() {
         return VFS_ID_Array;
     }
 
-    public void set_VFS_ID_Array(int[] inputArray) {
+    public void Set_VFS_ID_Array(int[] inputArray) {
         VFS_ID_Array = inputArray;
+    }
+
+    public void AddToMessageQueue(KernelMessage km) {
+        messageQueue.addLast(km);
+    }
+
+    public KernelMessage PopMessageQueue() {
+        if (!messageQueue.isEmpty()) {
+            return messageQueue.pop();
+        }
+        else {
+            return null;
+        }
     }
 
     public void run() {
@@ -76,8 +98,8 @@ public class KernelandProcess {
             thread.resume();
         }
         else {
-            thread.start();
             thread_started = true;
+            thread.start();
         }
     }
 }

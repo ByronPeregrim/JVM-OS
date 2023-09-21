@@ -8,7 +8,7 @@ public class VFS implements Device {
     private RandomDevice randomDevice = new RandomDevice();
     private FakeFileSystem fakeFileSystem = new FakeFileSystem();
 
-    HashMap<Integer,Device_ID_Combination> VFS_devices = new HashMap<Integer,Device_ID_Combination> ();
+    private HashMap<Integer,Device_ID_Combination> VFS_devices = new HashMap<Integer,Device_ID_Combination> ();
 
     public VFS() {
         
@@ -23,11 +23,11 @@ public class VFS implements Device {
             id = id_arg;
         }
 
-        protected Device getDevice() {
+        protected Device GetDevice() {
             return device;
         }
 
-        protected int getID() {
+        protected int GetID() {
             return id;
         }
     }
@@ -69,20 +69,20 @@ public class VFS implements Device {
     public byte[] Read(int id, int size) throws IOException {
         // Feed arguments into similar method within appropriate device
         Device_ID_Combination current_Combination = VFS_devices.get(id);
-        Device current_Device = current_Combination.getDevice();
-        return current_Device.Read(current_Combination.getID(), size);
+        Device current_Device = current_Combination.GetDevice();
+        return current_Device.Read(current_Combination.GetID(), size);
     }
 
     public int Write(int id, byte[] data) {
         Device_ID_Combination current_Combination = VFS_devices.get(id);
-        Device current_Device = current_Combination.getDevice();
-        return current_Device.Write(current_Combination.getID(), data);
+        Device current_Device = current_Combination.GetDevice();
+        return current_Device.Write(current_Combination.GetID(), data);
     }
 
     public void Seek(int id, int to) throws IOException {
         Device_ID_Combination current_Combination = VFS_devices.get(id);
-        Device current_Device = current_Combination.getDevice();
-        current_Device.Seek(current_Combination.getID(), to);
+        Device current_Device = current_Combination.GetDevice();
+        current_Device.Seek(current_Combination.GetID(), to);
     }
 
 }

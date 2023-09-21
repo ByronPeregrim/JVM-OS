@@ -4,13 +4,14 @@ import java.security.InvalidAlgorithmParameterException;
 public class OS {
 
     private static Kernel kernel;
+    
     // Following variables are for testing purposes  
     private static int device_id0;
     private static int device_id1;
     private static int device_id2;
     private static int device_id3;
     private static int device_id4;
-
+    
 
     public static enum Priority {
         REALTIME,
@@ -49,8 +50,23 @@ public class OS {
         kernel.Sleep(milliseconds);
     }
 
-    // Following methods are for testing purposes
+    public static int GetPID() {
+        return kernel.GetPID();
+    }
 
+    public static int GetPIDByName(String s) {
+        return kernel.GetPIDByName(s);
+    }
+
+    public static void SendMessage(KernelMessage km) {
+        kernel.SendMessage(km);
+    }
+
+    public static KernelMessage WaitForMessage() {
+        return kernel.WaitForMessage();
+    }
+
+    // Following methods are for testing purposes
     public static void AddDevice0() throws InvalidAlgorithmParameterException, IOException {
         device_id0 = kernel.Open("random 100");
         byte[] array = kernel.Read(device_id0, 10);
@@ -118,4 +134,5 @@ public class OS {
         kernel.Close(device_id3);
         kernel.Close(device_id4);
     }
+    
 }
