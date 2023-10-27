@@ -5,6 +5,7 @@ public class Kernel implements Device {
 
     private Scheduler scheduler;
     private VFS VFS = new VFS();
+    private boolean[] activePhysicalPages = new boolean[1024];
 
     public Kernel() {
         scheduler = new Scheduler();
@@ -111,4 +112,44 @@ public class Kernel implements Device {
         }
     }
 
+    public void GetMapping(int virtualPageNumber) {
+        scheduler.GetMapping(virtualPageNumber);
+    }
+
+    public int AllocateMemory(int size) {
+        int num_of_pages = size / 1024;
+        int[] physicalPageArray = new int[num_of_pages];
+        int index = 0;
+        for (int i = 0; i < activePhysicalPages.length; i++) {
+            if (activePhysicalPages[i] == false) {
+                physicalPageArray[index] = i;
+                index += 1;
+                activePhysicalPages[i] = true;
+            }
+            if (index >= num_of_pages) {
+                break;
+            }
+        }
+        int virtualPageNumber = scheduler.AllocateMemory(physicalPageArray);
+        return virtualPageNumber * 1024;
+    }
+
+    public void FreeMemory(int pointer, int size) {
+        int virtualPageNumber = pointer / 1024;
+        int num_of_pages = size / 1024;
+        int[] physicalPageArray = scheduler.FreeMemory(virtualPageNumber, num_of_pages);
+        for (int i = 0; i < physicalPageArray.length; i++) {
+            activePhysicalPages[physicalPageArray[i]] = false;
+        }
+    }
+
+    public void FreeActivePages(int[] physicalPageArray) {
+        for (int i = 0; i < physicalPageArray.length; i++) {
+            activePhysicalPages[physicalPageArray[i]] = false;
+        }
+    }
+
+    public void KillCurrentProcess() {
+        scheduler.KillCurrentProcess();
+    }
 }

@@ -5,6 +5,7 @@ public class KernelandProcess {
     private static int nextpid;
     private int PID;
     private boolean thread_started = false;
+    private boolean thread_stopped = false;
     private Thread thread;
     private int wakeUpTime;
     private OS.Priority priority;
@@ -12,6 +13,7 @@ public class KernelandProcess {
     private int[] VFS_ID_Array = new int[10];
     private String name;
     private LinkedList<KernelMessage> messageQueue = new LinkedList<KernelMessage>();
+    private int[] virtualToPhysicalPageMap = new int[100]; // Index is virtual page number, value is physical page number
 
     public KernelandProcess(UserlandProcess up, OS.Priority input_priority, boolean callSleep) {
         thread = new Thread(up);
@@ -22,6 +24,9 @@ public class KernelandProcess {
             VFS_ID_Array[i] = -1;
         }
         name = up.getClass().getSimpleName();
+        for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
+            virtualToPhysicalPageMap[i] = -1;
+        }
     }
 
     public void Stop() {
@@ -31,7 +36,7 @@ public class KernelandProcess {
     }
 
     public boolean IsDone() {
-        if (thread_started == true && !thread.isAlive()) {
+        if (thread_started == true && thread_stopped == true) {
             return true;
         }
         else {
@@ -92,14 +97,72 @@ public class KernelandProcess {
         }
     }
 
-    public void run() {
-        // If running for the first time, start thread, otherwise, resume suspended thread.
-        if (thread_started) {
-            thread.resume();
+    public void GetMapping(int virtualPageNumber) {
+        if (virtualToPhysicalPageMap[virtualPageNumber] != -1) {
+            OS.UpdateTLB(virtualPageNumber, virtualToPhysicalPageMap[virtualPageNumber]);
         }
-        else {
-            thread_started = true;
-            thread.start();
+    }
+
+    public int AllocateMemory(int[] physicalPagesArray) {
+        int counter = 0;
+        for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
+            if (virtualToPhysicalPageMap[i] == -1) {
+                counter += 1;
+            }
+            else {
+                counter = 0;
+            }
+            if (counter >= physicalPagesArray.length) {
+                counter = 0;
+                for (int j = i - physicalPagesArray.length + 1; j < i+1; j++) {
+                    virtualToPhysicalPageMap[j] = physicalPagesArray[counter++];
+                }
+                return i - physicalPagesArray.length + 1;
+            }
+        }
+        return -1;
+    }
+
+    public int[] FreeMemory(int virtualPage, int numberOfPages) {
+        int[] physicalPageArray = new int[numberOfPages];
+        for (int i = virtualPage; i < virtualPage + numberOfPages; i++) {
+            physicalPageArray[i - virtualPage] = virtualToPhysicalPageMap[i];
+            virtualToPhysicalPageMap[i] = -1;
+        }
+        return physicalPageArray;
+    }
+
+    public int[] FreeAllPages() {
+        int[] tempArray = new int[100];
+        int index = 0;
+        for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
+            if (virtualToPhysicalPageMap[i] != -1) {
+                tempArray[index] = virtualToPhysicalPageMap[i];
+                index += 1;
+                virtualToPhysicalPageMap[i] = -1;
+            }
+        }
+        int[] physicalPageArray = new int[index];
+        for (int i = 0; i < index; i++) {
+            physicalPageArray[i] = tempArray[i];
+        }
+        return physicalPageArray;
+    }
+
+    public void KillProcess() {
+        thread_stopped = true;
+    }
+
+    public void run() {
+        if (thread_stopped == false) {
+            // If running for the first time, start thread, otherwise, resume suspended thread.
+            if (thread_started) {
+                thread.resume();
+            }
+            else {
+                thread_started = true;
+                thread.start();
+            }
         }
     }
 }

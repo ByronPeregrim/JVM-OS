@@ -80,11 +80,10 @@ public class Scheduler {
 
     public void SwitchProcess() {
         // Stop any running processes
-        StopProcesses(backgroundProcessList);
-        StopProcesses(realtimeProcessList);
-        StopProcesses(interactiveProcessList);
+        StopProcess();
         StopWaitingProcesses();
         WakeUpSleepingProcesses();
+        OS.ClearTLB();
         // Next process determined by priority queue
         KernelandProcess nextProcess = GetNextProcess();
         if (nextProcess != null) {
@@ -93,30 +92,36 @@ public class Scheduler {
         }
     }
 
-    public void StopProcesses(List<KernelandProcess> processList) {
-        // Suspend any running processes. If process isn't finished, add to end of list.
-        if (processList.size() > 0) {
-            for (int i = 0; i < processList.size(); i++) {
-            if (processList.get(i).IsRunning()) {
-                processList.get(i).Stop();
-                if (!processList.get(i).IsDone()) {
-                    processList.add(processList.size(),processList.get(i));
-                    processList.remove(i);
-                }
-                else {
-                    // If process is done, close all devices and remove from maps and process list
-                    int[] open_device_IDs = processList.get(i).Get_VFS_ID_Array();
-                    for (int j = 0; j < open_device_IDs.length; j++) {
-                        if (open_device_IDs[j] != -1) {
-                            kernel.Close(open_device_IDs[j]);
-                        }
-                    }
-                    PIDToProcessMap.remove(processList.get(i).GetPID());
-                    nameToPIDMap.remove(processList.get(i).GetName());
-                    processList.remove(i);
+    public void StopProcess() {
+        // Suspend currently running process. If process isn't finished, add to end of process list.
+        if (currentProcess != null && currentProcess.IsRunning()) {
+            currentProcess.Stop();
+            if (!currentProcess.IsDone()) {
+                RemoveFromProcessList(currentProcess);
+                switch (currentProcess.GetPriority()) {
+                    case REALTIME:
+                        realtimeProcessList.add(realtimeProcessList.size(),currentProcess);
+                        break;
+                    case BACKGROUND:
+                        backgroundProcessList.add(backgroundProcessList.size(),currentProcess);
+                        break;
+                    case INTERACTIVE:
+                        interactiveProcessList.add(interactiveProcessList.size(),currentProcess);
+                        break;
                 }
             }
-        }
+            else {
+                // If process is done, close all devices and remove from maps and process list
+                int[] open_device_IDs = currentProcess.Get_VFS_ID_Array();
+                for (int j = 0; j < open_device_IDs.length; j++) {
+                    if (open_device_IDs[j] != -1) {
+                        kernel.Close(open_device_IDs[j]);
+                    }
+                }
+                PIDToProcessMap.remove(currentProcess.GetPID());
+                nameToPIDMap.remove(currentProcess.GetName());
+                RemoveFromProcessList(currentProcess);
+            }
         }
     }
 
@@ -331,5 +336,21 @@ public class Scheduler {
                     break;
             }
         }
+    }
+
+    public void GetMapping(int virtualPageNumber) {
+        currentProcess.GetMapping(virtualPageNumber);
+    }
+
+    public int AllocateMemory(int[] physicalPagesArray) {
+        return currentProcess.AllocateMemory(physicalPagesArray);
+    }
+
+    public int[] FreeMemory(int virtualPageNumber, int numberOfPages) {
+        return currentProcess.FreeMemory(virtualPageNumber, numberOfPages);
+    }
+
+    public void KillCurrentProcess() {
+        currentProcess.KillProcess();
     }
 }

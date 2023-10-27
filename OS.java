@@ -4,14 +4,6 @@ import java.security.InvalidAlgorithmParameterException;
 public class OS {
 
     private static Kernel kernel;
-    
-    // Following variables are for testing purposes  
-    private static int device_id0;
-    private static int device_id1;
-    private static int device_id2;
-    private static int device_id3;
-    private static int device_id4;
-    
 
     public static enum Priority {
         REALTIME,
@@ -65,6 +57,57 @@ public class OS {
     public static KernelMessage WaitForMessage() {
         return kernel.WaitForMessage();
     }
+
+    public static void UpdateTLB(int virtualPageNumber, int physicalPageNumber) {
+        int rand_int = (int)Math.round(Math.random());
+        UserlandProcess.TLB[rand_int][0] = virtualPageNumber;
+        UserlandProcess.TLB[rand_int][1] = physicalPageNumber;
+    }
+
+    public static void GetMapping(int virtualPageNumber) {
+        kernel.GetMapping(virtualPageNumber);
+    }
+
+    public static int AllocateMemory(int size) {
+        if (size % 1024 == 0) {
+            return kernel.AllocateMemory(size);
+        }
+        else {
+            return -1; // Failure
+        }
+    }
+
+    public static boolean FreeMemory(int pointer, int size) {
+        if (size % 1024 == 0 && pointer % 1024 == 0) {
+            kernel.FreeMemory(pointer,size);
+            return true;
+        }
+        else {
+            return false; // Failure
+        }
+    }
+
+    public static void FreeActivePages(int[] physicalPageArray) {
+        kernel.FreeActivePages(physicalPageArray);
+    }
+
+    public static void ClearTLB() {
+        for (int i = 0; i < UserlandProcess.TLB.length; i++) {
+            UserlandProcess.TLB[i][0] = -1;
+            UserlandProcess.TLB[i][1] = -1;
+        }
+    }
+
+    public static void KillCurrentProcess() {
+        kernel.KillCurrentProcess();
+    }
+
+    // Following variables are for testing purposes  
+    private static int device_id0;
+    private static int device_id1;
+    private static int device_id2;
+    private static int device_id3;
+    private static int device_id4;
 
     // Following methods are for testing purposes
     public static void AddDevice0() throws InvalidAlgorithmParameterException, IOException {
