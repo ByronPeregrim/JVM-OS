@@ -126,9 +126,11 @@ public class Kernel implements Device {
     }
 
     public int AllocateMemory(int size) {
+        // Page size = 1024 bytes
         int num_of_pages = size / 1024;
         int[] physicalPageArray = new int[num_of_pages];
         int index = 0;
+        // Look for unused physical pages
         for (int i = 0; i < activePhysicalPages.length; i++) {
             if (activePhysicalPages[i] == false) {
                 physicalPageArray[index] = i;
@@ -139,6 +141,7 @@ public class Kernel implements Device {
                 break;
             }
         }
+        // Convert physical pages to a continuous set of virtual pages
         int virtualPageNumber = scheduler.AllocateMemory(physicalPageArray);
         return virtualPageNumber * 1024;
     }
@@ -146,13 +149,16 @@ public class Kernel implements Device {
     public void FreeMemory(int pointer, int size) {
         int virtualPageNumber = pointer / 1024;
         int num_of_pages = size / 1024;
+        // Free memory in scheduler, return list of corresponding physical page numbers
         int[] physicalPageArray = scheduler.FreeMemory(virtualPageNumber, num_of_pages);
+        // Set physical pages to "unused"
         for (int i = 0; i < physicalPageArray.length; i++) {
             activePhysicalPages[physicalPageArray[i]] = false;
         }
     }
 
     public void FreeActivePages(int[] physicalPageArray) {
+        // Free ALL active pages
         for (int i = 0; i < physicalPageArray.length; i++) {
             activePhysicalPages[physicalPageArray[i]] = false;
         }

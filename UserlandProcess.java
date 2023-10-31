@@ -25,10 +25,12 @@ public abstract class UserlandProcess implements Runnable {
     }
 
     public int ConvertVirtualAddressToPhysical(int virtualAddress) {
+        // Page size = 1024 bytes
         int virtualPageNumber = virtualAddress / 1024;
         int pageOffset = virtualAddress % 1024;
         int physicalPageNumber = -1;
         int physicalAddress = -1;
+        // Check if virtual page number is in TLB
         for (int i = 0; i < TLB.length; i++) {
             if (TLB[i][0] == virtualPageNumber) {
                 physicalPageNumber = TLB[i][1];
@@ -38,8 +40,9 @@ public abstract class UserlandProcess implements Runnable {
         if (physicalPageNumber != -1) { // Page was found
             physicalAddress = (physicalPageNumber * 1024) + pageOffset;
         }
-        else {
+        else { // Page was not found
             OS.GetMapping(virtualPageNumber);
+            // Recheck TLB
             for (int i = 0; i < TLB.length; i++) {
                 if (TLB[i][0] == virtualPageNumber) {
                     physicalPageNumber = TLB[i][1];
@@ -49,7 +52,7 @@ public abstract class UserlandProcess implements Runnable {
             if (physicalPageNumber != -1) { // Page was found
                 physicalAddress = (physicalPageNumber * 1024) + pageOffset;
             }
-            else {
+            else { // Page was not found
                 System.err.println("Could not locate physical address corresponding to given virtual address.");
                 OS.KillCurrentProcess();
             }

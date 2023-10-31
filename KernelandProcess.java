@@ -13,7 +13,7 @@ public class KernelandProcess {
     private int[] VFS_ID_Array = new int[10];
     private String name;
     private LinkedList<KernelMessage> messageQueue = new LinkedList<KernelMessage>();
-    private int[] virtualToPhysicalPageMap = new int[100]; // Index is virtual page number, value is physical page number
+    private VirtualToPhysicalMapping[] virtualToPhysicalPageMap = new VirtualToPhysicalMapping[100]; // Index is virtual page number, value is physical page number
 
     public KernelandProcess(UserlandProcess up, OS.Priority input_priority, boolean callSleep) {
         thread = new Thread(up);
@@ -24,9 +24,6 @@ public class KernelandProcess {
             VFS_ID_Array[i] = -1;
         }
         name = up.getClass().getSimpleName();
-        for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
-            virtualToPhysicalPageMap[i] = -1;
-        }
     }
 
     public void Stop() {
@@ -98,15 +95,17 @@ public class KernelandProcess {
     }
 
     public void GetMapping(int virtualPageNumber) {
-        if (virtualToPhysicalPageMap[virtualPageNumber] != -1) {
-            OS.UpdateTLB(virtualPageNumber, virtualToPhysicalPageMap[virtualPageNumber]);
+        if (virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber != -1) {
+            OS.UpdateTLB(virtualPageNumber, virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber);
         }
     }
 
     public int AllocateMemory(int[] physicalPagesArray) {
         int counter = 0;
+        /* Looks for a gap in the virtualToPhysicalPageMap array large enough to store all of the pages
+           in the input array in a continuous fashion, then, once found, stores those pages. */
         for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
-            if (virtualToPhysicalPageMap[i] == -1) {
+            if (virtualToPhysicalPageMap[i].physicalPageNumber == -1) {
                 counter += 1;
             }
             else {
@@ -115,7 +114,7 @@ public class KernelandProcess {
             if (counter >= physicalPagesArray.length) {
                 counter = 0;
                 for (int j = i - physicalPagesArray.length + 1; j < i+1; j++) {
-                    virtualToPhysicalPageMap[j] = physicalPagesArray[counter++];
+                    virtualToPhysicalPageMap[j].physicalPageNumber = physicalPagesArray[counter++];
                 }
                 return i - physicalPagesArray.length + 1;
             }
@@ -125,9 +124,11 @@ public class KernelandProcess {
 
     public int[] FreeMemory(int virtualPage, int numberOfPages) {
         int[] physicalPageArray = new int[numberOfPages];
+        // Free virtual pages, create and return array of corresponding physical pages to be freed
         for (int i = virtualPage; i < virtualPage + numberOfPages; i++) {
-            physicalPageArray[i - virtualPage] = virtualToPhysicalPageMap[i];
-            virtualToPhysicalPageMap[i] = -1;
+            physicalPageArray[i - virtualPage] = virtualToPhysicalPageMap[i].physicalPageNumber;
+            virtualToPhysicalPageMap[i].physicalPageNumber = -1;
+            // NEED TO FREE DISCPAGENUMBER TOO???
         }
         return physicalPageArray;
     }
@@ -136,12 +137,15 @@ public class KernelandProcess {
         int[] tempArray = new int[100];
         int index = 0;
         for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
-            if (virtualToPhysicalPageMap[i] != -1) {
-                tempArray[index] = virtualToPhysicalPageMap[i];
+            if (virtualToPhysicalPageMap[i].physicalPageNumber != -1) {
+                // Store physical pages numbers in a temp array
+                tempArray[index] = virtualToPhysicalPageMap[i].physicalPageNumber;
                 index += 1;
-                virtualToPhysicalPageMap[i] = -1;
+                virtualToPhysicalPageMap[i].physicalPageNumber = -1;
+                // NEED TO FREE DISCPAGENUMBER TOO???
             }
         }
+        // Creates appropriately sized array containing physical pages corresponding to freed virtual pages
         int[] physicalPageArray = new int[index];
         for (int i = 0; i < index; i++) {
             physicalPageArray[i] = tempArray[i];
