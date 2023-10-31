@@ -102,14 +102,13 @@ public class OS {
         kernel.KillCurrentProcess();
     }
 
-    // Following variables are for testing purposes  
+    // Following variables and methods are for device testing purposes  
     private static int device_id0;
     private static int device_id1;
     private static int device_id2;
     private static int device_id3;
     private static int device_id4;
 
-    // Following methods are for testing purposes
     public static void AddDevice0() throws InvalidAlgorithmParameterException, IOException {
         device_id0 = kernel.Open("random 100");
         byte[] array = kernel.Read(device_id0, 10);

@@ -9,6 +9,15 @@ public class Kernel implements Device {
 
     public Kernel() {
         scheduler = new Scheduler();
+        try {
+            int fileID = Open("file swap.dat");
+        } catch (InvalidAlgorithmParameterException e) {
+            System.out.println("Invalid parameter provided while attempting to open swap.dat");
+            System.exit(0);
+        } catch (IOException e) {
+            System.out.println("Error while opening swap.dat");
+            System.exit(0);
+        }
     }
 
     public int CreateProcess(UserlandProcess up, OS.Priority priority, boolean callSleep) {
