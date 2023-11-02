@@ -1,4 +1,4 @@
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.security.InvalidAlgorithmParameterException;
 import java.util.HashMap;
 
@@ -32,7 +32,7 @@ public class VFS implements Device {
         }
     }
 
-    public int Open(String s) throws InvalidAlgorithmParameterException, IOException {
+    public int Open(String s) throws InvalidAlgorithmParameterException, FileNotFoundException {
         // String argument should contain 2 word
         String[] args = s.split(" ");
         if (args.length != 2) {
@@ -66,7 +66,7 @@ public class VFS implements Device {
         VFS_devices.remove(id);
     }
 
-    public byte[] Read(int id, int size) throws IOException {
+    public byte[] Read(int id, int size) {
         // Feed arguments into similar method within appropriate device
         Device_ID_Combination current_Combination = VFS_devices.get(id);
         Device current_Device = current_Combination.GetDevice();
@@ -79,7 +79,7 @@ public class VFS implements Device {
         return current_Device.Write(current_Combination.GetID(), data);
     }
 
-    public void Seek(int id, int to) throws IOException {
+    public void Seek(int id, int to) {
         Device_ID_Combination current_Combination = VFS_devices.get(id);
         Device current_Device = current_Combination.GetDevice();
         current_Device.Seek(current_Combination.GetID(), to);

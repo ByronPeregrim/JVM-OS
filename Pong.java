@@ -22,7 +22,11 @@ public class Pong extends UserlandProcess {
             // Sleep for length of interrupt cycle, so process does not run more than once per cycle
             try {
                 Thread.sleep(250); // sleep for 250 ms
-            } catch (Exception e) { }
+            } catch (Exception e) {
+                System.err.println("Pong: run: Error while attempting to sleep.");
+                e.printStackTrace();
+                System.exit(0);
+            }
         }
     }
 }

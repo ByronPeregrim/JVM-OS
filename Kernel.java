@@ -1,4 +1,4 @@
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.security.InvalidAlgorithmParameterException;
 
 public class Kernel implements Device {
@@ -6,18 +6,15 @@ public class Kernel implements Device {
     private Scheduler scheduler;
     private VFS VFS = new VFS();
     private boolean[] activePhysicalPages = new boolean[1024];
+    private int swapFileID;
 
-    public Kernel() {
+    public Kernel() throws InvalidAlgorithmParameterException, FileNotFoundException{
         scheduler = new Scheduler();
-        try {
-            int fileID = Open("file swap.dat");
-        } catch (InvalidAlgorithmParameterException e) {
-            System.out.println("Invalid parameter provided while attempting to open swap.dat");
-            System.exit(0);
-        } catch (IOException e) {
-            System.out.println("Error while opening swap.dat");
-            System.exit(0);
-        }
+        
+    }
+
+    public void SendSwapFileIDToKernel(int swapFileID) {
+        this.swapFileID = swapFileID;
     }
 
     public int CreateProcess(UserlandProcess up, OS.Priority priority, boolean callSleep) {
@@ -28,7 +25,7 @@ public class Kernel implements Device {
         scheduler.Sleep(milliseconds);
     }
 
-    public int Open(String string) throws InvalidAlgorithmParameterException, IOException {
+    public int Open(String string) throws InvalidAlgorithmParameterException, FileNotFoundException {
         KernelandProcess currentProcess = scheduler.getCurrentlyRunning();
         int[] VFS_ID_Array = currentProcess.Get_VFS_ID_Array();
         System.out.println(currentProcess + " " + currentProcess.GetPriority());
@@ -63,7 +60,7 @@ public class Kernel implements Device {
         currentProcess.Set_VFS_ID_Array(VFS_ID_Array);
     }
 
-    public byte[] Read(int id, int size) throws IOException {
+    public byte[] Read(int id, int size) {
         KernelandProcess currentProcess = scheduler.getCurrentlyRunning();
         int[] VFS_ID_Array = currentProcess.Get_VFS_ID_Array();
         int VFS_ID = VFS_ID_Array[id];
@@ -77,7 +74,7 @@ public class Kernel implements Device {
         return VFS.Write(VFS_ID, data);
     }
 
-    public void Seek(int id, int to) throws IOException {
+    public void Seek(int id, int to) {
         KernelandProcess currentProcess = scheduler.getCurrentlyRunning();
         int[] VFS_ID_Array = currentProcess.Get_VFS_ID_Array();
         int VFS_ID = VFS_ID_Array[id];
@@ -166,5 +163,33 @@ public class Kernel implements Device {
 
     public void KillCurrentProcess() {
         scheduler.KillCurrentProcess();
+    }
+
+    public int GetUnusedPage() {
+        for (int i = 0; i < activePhysicalPages.length; i++) {
+            if (activePhysicalPages[i] == false) {
+                activePhysicalPages[i] = true;
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public KernelandProcess GetRandomProcess() {
+        return scheduler.GetRandomProcess();
+    }
+
+    public int GetSwapFileID() {
+        return swapFileID;
+    }
+
+    public int WriteToDisk(byte[] pageData, int diskPageNumber) {
+        Seek(swapFileID, diskPageNumber*1024);
+        return Write(swapFileID, pageData);
+    }
+
+    public byte[] ReadFromDisk(int diskPageNumber) {
+        Seek(swapFileID,diskPageNumber*1024);
+        return Read(swapFileID, 1024);
     }
 }

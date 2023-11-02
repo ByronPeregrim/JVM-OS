@@ -12,7 +12,11 @@ public class HelloWorld extends UserlandProcess {
             System.out.println("Hello world. Read Result: " + Read(start_address+1000));
             try {
                 Thread.sleep(50); // sleep for 50 ms
-            } catch (Exception e) { }
+            } catch (Exception e) {
+                System.err.println("HelloWorld: run: Error while attempting to sleep.");
+                e.printStackTrace();
+                System.exit(0);
+            }
         }
     }
 }

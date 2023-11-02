@@ -2,7 +2,6 @@ import java.util.LinkedList;
 
 public class KernelandProcess {
 
-    private static int nextpid;
     private int PID;
     private boolean thread_started = false;
     private boolean thread_stopped = false;
@@ -95,8 +94,35 @@ public class KernelandProcess {
     }
 
     public void GetMapping(int virtualPageNumber) {
-        if (virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber != -1) {
-            OS.UpdateTLB(virtualPageNumber, virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber);
+        if (virtualToPhysicalPageMap[virtualPageNumber] != null) {
+            if (virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber == -1) {
+                int unusedPageNumber = OS.GetUnusedPage();
+                // If GetUnusedPage does not return -1, use unused page
+                if (unusedPageNumber != -1) {
+                    virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber = unusedPageNumber;
+                }
+                // If -1, then all physical pages are in use, must use swap file
+                else {
+                    virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber = OS.SwapFile();
+                }
+                if (virtualToPhysicalPageMap[virtualPageNumber].diskPageNumber != -1) {
+                    // Read Data from disk page
+                    byte[] diskPageData = OS.ReadFromDisk(virtualToPhysicalPageMap[virtualPageNumber].diskPageNumber);
+                    // Write data to physical page
+                    OS.WriteToPhysicalPage(virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber, diskPageData);
+                }
+                else {
+                    // Populate memory with 0's
+                    byte[] diskPageData = new byte[1024];
+                    OS.WriteToPhysicalPage(virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber, diskPageData);
+                }
+            }
+            if (virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber != -1) {
+                OS.UpdateTLB(virtualPageNumber, virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber);
+            }
+            else {
+                System.err.println("Error: KernelandProcess: GetMapping: Attempted to update TLB with physical page number = -1");
+            }
         }
     }
 
@@ -105,7 +131,7 @@ public class KernelandProcess {
         /* Looks for a gap in the virtualToPhysicalPageMap array large enough to store all of the pages
            in the input array in a continuous fashion, then, once found, stores those pages. */
         for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
-            if (virtualToPhysicalPageMap[i].physicalPageNumber == -1) {
+            if (virtualToPhysicalPageMap[i] == null) {
                 counter += 1;
             }
             else {
@@ -114,6 +140,7 @@ public class KernelandProcess {
             if (counter >= physicalPagesArray.length) {
                 counter = 0;
                 for (int j = i - physicalPagesArray.length + 1; j < i+1; j++) {
+                    virtualToPhysicalPageMap[j] = new VirtualToPhysicalMapping();
                     virtualToPhysicalPageMap[j].physicalPageNumber = physicalPagesArray[counter++];
                 }
                 return i - physicalPagesArray.length + 1;
@@ -127,21 +154,36 @@ public class KernelandProcess {
         // Free virtual pages, create and return array of corresponding physical pages to be freed
         for (int i = virtualPage; i < virtualPage + numberOfPages; i++) {
             physicalPageArray[i - virtualPage] = virtualToPhysicalPageMap[i].physicalPageNumber;
-            virtualToPhysicalPageMap[i].physicalPageNumber = -1;
+            virtualToPhysicalPageMap[i] = null;
             // NEED TO FREE DISCPAGENUMBER TOO???
         }
-        return physicalPageArray;
+        // Counts the number of VirtualToPhysicalMappings with mapping to physical page
+        int counter = 0;
+        for (int i = 0; i < physicalPageArray.length; i++) {
+            if (physicalPageArray[i] != -1)
+                counter++; 
+        }
+        // Create appropriate sized array and add physical pages that aren't -1
+        int[] trimmedPhysicalPageArray = new int[counter];
+        int index = 0;
+        for (int i = 0; i < physicalPageArray.length; i++) {
+            if (physicalPageArray[i] != -1) {
+                trimmedPhysicalPageArray[index] = physicalPageArray[i];
+                index++;
+            }
+        }
+        return trimmedPhysicalPageArray;
     }
 
     public int[] FreeAllPages() {
         int[] tempArray = new int[100];
         int index = 0;
         for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
-            if (virtualToPhysicalPageMap[i].physicalPageNumber != -1) {
+            if (virtualToPhysicalPageMap[i] == null && virtualToPhysicalPageMap[i].physicalPageNumber != -1) {
                 // Store physical pages numbers in a temp array
                 tempArray[index] = virtualToPhysicalPageMap[i].physicalPageNumber;
                 index += 1;
-                virtualToPhysicalPageMap[i].physicalPageNumber = -1;
+                virtualToPhysicalPageMap[i] = null;
                 // NEED TO FREE DISCPAGENUMBER TOO???
             }
         }
@@ -155,6 +197,23 @@ public class KernelandProcess {
 
     public void KillProcess() {
         thread_stopped = true;
+    }
+
+    public int SwapActivePage() {
+        for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
+            if (virtualToPhysicalPageMap[i] != null) {
+                if (virtualToPhysicalPageMap[i].physicalPageNumber != -1) {
+                    // Read victim page in 
+                    byte[] writeToDiskData = OS.ReadPhysicalPage(virtualToPhysicalPageMap[i].physicalPageNumber);
+                    // Write victim page to disk
+                    virtualToPhysicalPageMap[i].diskPageNumber = OS.WriteToDisk(writeToDiskData, virtualToPhysicalPageMap[i].diskPageNumber);
+                    int physicalPageNumber = virtualToPhysicalPageMap[i].physicalPageNumber;
+                   virtualToPhysicalPageMap[i].physicalPageNumber = -1;
+                   return physicalPageNumber;
+                }
+            }
+        }
+        return -1;
     }
 
     public void run() {

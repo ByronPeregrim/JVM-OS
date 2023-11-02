@@ -1,8 +1,8 @@
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.security.InvalidAlgorithmParameterException;
 
 public class Main {
-    public static void main(String[] args) throws InvalidAlgorithmParameterException, IOException {
+    public static void main(String[] args) throws InvalidAlgorithmParameterException, FileNotFoundException {
         OS.Startup(new HelloWorld(), OS.Priority.BACKGROUND);
         OS.AddDevice0();
         OS.AddDevice1();

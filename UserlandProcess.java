@@ -53,7 +53,7 @@ public abstract class UserlandProcess implements Runnable {
                 physicalAddress = (physicalPageNumber * 1024) + pageOffset;
             }
             else { // Page was not found
-                System.err.println("Could not locate physical address corresponding to given virtual address.");
+                System.err.println("Could not locate physical address corresponding to given virtual address. Killing current process.");
                 OS.KillCurrentProcess();
             }
         }
