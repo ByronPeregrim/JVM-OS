@@ -4,6 +4,7 @@ public abstract class UserlandProcess implements Runnable {
     public static byte[] memory = new byte[1048576];
 
     public byte Read(int virtualAddress) {
+        // Physical address corresponds to index in memory array
         int physicalAddress = ConvertVirtualAddressToPhysical(virtualAddress);
         if (physicalAddress != -1) {
             return memory[physicalAddress];
@@ -53,7 +54,7 @@ public abstract class UserlandProcess implements Runnable {
                 physicalAddress = (physicalPageNumber * 1024) + pageOffset;
             }
             else { // Page was not found
-                System.err.println("Could not locate physical address corresponding to given virtual address. Killing current process.");
+                System.err.println("Could not locate physical address corresponding to given virtual address.");
                 OS.KillCurrentProcess();
             }
         }

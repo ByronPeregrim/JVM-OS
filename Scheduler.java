@@ -14,7 +14,7 @@ public class Scheduler {
     private List<KernelandProcess> backgroundProcessList = Collections.synchronizedList(new LinkedList<KernelandProcess>());
     private List<KernelandProcess> sleepingProcessList = Collections.synchronizedList(new LinkedList<KernelandProcess>());
     private HashMap<Integer,KernelandProcess> waitingProcesses = new HashMap<Integer,KernelandProcess>();
-    private Timer timer = new Timer(); 
+    private Timer timer = new Timer();
     private KernelandProcess currentProcess;
     private Clock clock = Clock.systemDefaultZone();
     private boolean processRunning = false;
@@ -196,11 +196,7 @@ public class Scheduler {
             currentProcess = nextProcess;
             try {
                 Thread.sleep(250); // sleep for 250 ms
-            } catch (Exception e) {
-                System.err.println("Scheduler: CheckForSleepAndRun: Error while attempting to sleep.");
-                e.printStackTrace();
-                System.exit(0);
-            }
+            } catch (Exception e) { }
             Sleep(3000); // Sleeps for 3 seconds
         }
         else {
@@ -361,6 +357,28 @@ public class Scheduler {
     public KernelandProcess GetRandomProcess() {
         Object[] processes = PIDToProcessMap.values().toArray();
         return (KernelandProcess) processes[rand.nextInt(processes.length)];
+    }
+
+    public int PageSwap() {
+        int virtualIndex = -1;
+        KernelandProcess randomProcess = null;
+        while (virtualIndex == -1) {
+            randomProcess = GetRandomProcess();
+            virtualIndex = randomProcess.LookForActivePhysicalPage();
+        }
+        VirtualToPhysicalMapping victim = randomProcess.GetMappingObject(virtualIndex);
+        byte[] data = OS.ReadFromMemory(victim.physicalPageNumber);
+        if (victim.diskPageNumber != -1) {
+            OS.WriteToDisk(victim.diskPageNumber, data);
+        }
+        else {
+            int newDiskPageNumber = OS.WriteToDisk(data);
+            victim.diskPageNumber = newDiskPageNumber;
+        }
+        int victimsPhysicalPage = victim.physicalPageNumber;
+        victim.physicalPageNumber = -1;
+        randomProcess.SetMappingObject(virtualIndex, victim);
+        return victimsPhysicalPage;
     }
 
 }

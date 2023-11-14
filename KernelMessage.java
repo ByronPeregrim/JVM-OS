@@ -2,6 +2,7 @@ public class KernelMessage {
     private int senderPID;
     private int targetPID;
     private int message;
+    private byte[] data_array;
     
     public KernelMessage() {
     

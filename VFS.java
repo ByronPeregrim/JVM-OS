@@ -32,11 +32,16 @@ public class VFS implements Device {
         }
     }
 
-    public int Open(String s) throws InvalidAlgorithmParameterException, FileNotFoundException {
+    public int Open(String s) {
         // String argument should contain 2 word
         String[] args = s.split(" ");
         if (args.length != 2) {
-            throw new InvalidAlgorithmParameterException("Incorrect number of arguments provided to VFS open method.");
+            try {
+                throw new InvalidAlgorithmParameterException("Incorrect number of arguments provided to VFS open method.");
+            } catch (InvalidAlgorithmParameterException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
         // Check first word of argument for device type
         String first_arg = args[0];
@@ -50,7 +55,8 @@ public class VFS implements Device {
             return VFS_ID;
         }
         else if (first_arg.equals("file")) {
-            int newID = fakeFileSystem.Open(args[1]);
+            int newID;
+            newID = fakeFileSystem.Open(args[1]);
             Device_ID_Combination newDeviceCombo = new Device_ID_Combination(fakeFileSystem,newID);
             int VFS_ID = VFS_ID_generator++;
             VFS_devices.put(VFS_ID,newDeviceCombo);
