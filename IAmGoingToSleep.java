@@ -9,7 +9,11 @@ public class IAmGoingToSleep extends UserlandProcess {
             System.out.println("I Am Going To Sleep");
             try {
                 Thread.sleep(50); // sleep for 50 ms
-            } catch (Exception e) { }
+            } catch (Exception e) {
+                System.err.println("IAmGoingToSleep: run: Error while attempting to sleep.");
+                e.printStackTrace();
+                System.exit(0);
+            }
         }
     }
 

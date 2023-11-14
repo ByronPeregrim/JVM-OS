@@ -41,7 +41,7 @@ public class RandomDevice implements Device {
 
     public void Seek(int id, int to) {
         for (int i = id; i < to; i++) {
-            Random currentRandom = randomArray[i];
+            //Random currentRandom = randomArray[i];
         }
     }
 }

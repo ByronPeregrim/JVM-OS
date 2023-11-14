@@ -10,7 +10,8 @@ public abstract class UserlandProcess implements Runnable {
             return memory[physicalAddress];
         }
         else {
-            System.err.println("Could not READ from physical address: " + virtualAddress);
+            System.err.println("UserlandProcess: Read: Could not READ from physical address: " + virtualAddress);
+            System.exit(0);
             return -1;
         }
     }
@@ -21,7 +22,8 @@ public abstract class UserlandProcess implements Runnable {
             memory[physicalAddress] = value;
         }
         else {
-            System.err.println("Could not WRITE byte value: " + value + " to physical address: " + virtualAddress);
+            System.err.println("UserlandProcess: Write: Could not WRITE byte value: " + value + " to physical address: " + virtualAddress);
+            System.exit(1);
         }
     }
 

@@ -16,7 +16,7 @@ public class FakeFileSystem implements Device {
             try {
                 throw new FileNotFoundException(string);
             } catch (FileNotFoundException e) {
-                // TODO Auto-generated catch block
+                System.exit(0);
                 e.printStackTrace();
             }
         }
@@ -25,10 +25,10 @@ public class FakeFileSystem implements Device {
         try {
             newRandomAccessFile = new RandomAccessFile(string, "rw");
         } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
+            System.err.println("FakeFileSystem: Open: File: " + string + " not found.");
             newRandomAccessFile = null;
             e.printStackTrace();
-            System.exit(0);
+            System.exit(1);
         }
         // Places RandomAccessFile into first open index in array
         for (i = 0; i < array.length; i++) {
@@ -44,8 +44,9 @@ public class FakeFileSystem implements Device {
         try {
             array[id].close();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
+            System.err.println("FakeFileSystem: Close: IOException.");
+            System.exit(2);
         }
         array[id] = null;
     }
@@ -56,8 +57,9 @@ public class FakeFileSystem implements Device {
         try {
             current.read(byteArray);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
+            System.err.println("FakeFileSystem: Read: IOException.");
+            System.exit(3);
         }
         return byteArray;
     }
@@ -79,8 +81,9 @@ public class FakeFileSystem implements Device {
         try {
             current.seek((long)to);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
+            System.err.println("FakeFileSystem: Seek: IOException.");
+            System.exit(4);
         }
     }
 }

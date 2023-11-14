@@ -1,4 +1,3 @@
-import java.io.FileNotFoundException;
 import java.security.InvalidAlgorithmParameterException;
 import java.util.HashMap;
 
@@ -39,7 +38,7 @@ public class VFS implements Device {
             try {
                 throw new InvalidAlgorithmParameterException("Incorrect number of arguments provided to VFS open method.");
             } catch (InvalidAlgorithmParameterException e) {
-                // TODO Auto-generated catch block
+                System.exit(0);
                 e.printStackTrace();
             }
         }

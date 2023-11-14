@@ -120,7 +120,7 @@ public class KernelandProcess {
             OS.UpdateTLB(virtualPageNumber, virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber);
         }
         else {
-            System.err.println("Virtual page number returns null value.");
+            System.err.println("KernelandProcess: GetMapping: Virtual page number returns null value.");
             System.exit(0);
         }
     }

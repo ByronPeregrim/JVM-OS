@@ -1,6 +1,3 @@
-import java.io.FileNotFoundException;
-import java.security.InvalidAlgorithmParameterException;
-
 public class Kernel implements Device {
 
     private Scheduler scheduler;
@@ -8,7 +5,6 @@ public class Kernel implements Device {
     private boolean[] activePhysicalPages = new boolean[1024];
     private int swapFileId = 0;
     private int nextDiskPage = 0;
-
 
     public Kernel() {
         scheduler = new Scheduler();
@@ -95,7 +91,8 @@ public class Kernel implements Device {
         copy.setSenderPID(GetPID());
         KernelandProcess target = scheduler.GetProcessByPID(copy.getTargetPID());
         if (target == null) {
-            System.out.println("ERROR: Message target not found.");
+            System.err.println("Kernel: SendMessage: Message target not found.");
+            System.exit(0);
         }
         else {
             target.AddToMessageQueue(copy);

@@ -196,7 +196,10 @@ public class Scheduler {
             currentProcess = nextProcess;
             try {
                 Thread.sleep(250); // sleep for 250 ms
-            } catch (Exception e) { }
+            } catch (Exception e) {
+                System.err.println("Scheduler: CheckForSleepAndRun: Failed to sleep.");
+                System.exit(0);
+             }
             Sleep(3000); // Sleeps for 3 seconds
         }
         else {
