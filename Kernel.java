@@ -144,7 +144,9 @@ public class Kernel implements Device {
     }
 
     public void FreeMemory(int virtualPageNumber, int size) {
+        // Receive array of physical pages from current process
         int[] pages = scheduler.FreeMemory(virtualPageNumber, size);
+        // Update active pages to "unused"
         for (int i = 0; i < pages.length; i++) {
             activePhysicalPages[pages[i]] = false;
         }
@@ -185,6 +187,7 @@ public class Kernel implements Device {
     }
 
     public int GetFreePage() {
+        // Return first unused page found
         for (int i = 0; i < activePhysicalPages.length; i++) {
             if (activePhysicalPages[i] == false) {
                 activePhysicalPages[i] = true;

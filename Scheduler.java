@@ -355,6 +355,7 @@ public class Scheduler {
     }
 
     public KernelandProcess GetRandomProcess() {
+        // Convert process map to array and return array value at random index
         Object[] processes = PIDToProcessMap.values().toArray();
         return (KernelandProcess) processes[rand.nextInt(processes.length)];
     }
@@ -362,11 +363,13 @@ public class Scheduler {
     public int PageSwap() {
         int virtualIndex = -1;
         KernelandProcess randomProcess = null;
+        // Search through processes for an active physical page
         while (virtualIndex == -1) {
             randomProcess = GetRandomProcess();
             virtualIndex = randomProcess.LookForActivePhysicalPage();
         }
         VirtualToPhysicalMapping victim = randomProcess.GetMappingObject(virtualIndex);
+        // Write victim's physical memory to disk.
         byte[] data = OS.ReadFromMemory(victim.physicalPageNumber);
         if (victim.diskPageNumber != -1) {
             OS.WriteToDisk(victim.diskPageNumber, data);
@@ -378,6 +381,7 @@ public class Scheduler {
         int victimsPhysicalPage = victim.physicalPageNumber;
         victim.physicalPageNumber = -1;
         randomProcess.SetMappingObject(virtualIndex, victim);
+        // Return physical page taken from victim
         return victimsPhysicalPage;
     }
 

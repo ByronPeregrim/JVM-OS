@@ -96,19 +96,23 @@ public class KernelandProcess {
     public void GetMapping(int virtualPageNumber) {
         if (virtualToPhysicalPageMap[virtualPageNumber] != null) {
             if (virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber == -1) {
+                // If mapping does not have an associated physical page number, look for unused page in kernel
                 int freePage = OS.GetFreePage();
                 if (freePage != -1) {
                     virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber = freePage;
                 }
                 else {
+                    // If no unused pages, write random page to disk to free
                     int victimsOldPageNumber = OS.PageSwap();
                     virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber = victimsOldPageNumber;
                 }
+                // If mapping with new physical page has been previously written to disk, read in data from disk and rewrite to memory
                 if (virtualToPhysicalPageMap[virtualPageNumber].diskPageNumber != -1) {
                     byte[] data = OS.ReadFromDisk(virtualToPhysicalPageMap[virtualPageNumber].diskPageNumber);
                     OS.WriteToMemory(virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber, data);
                 }
                 else {
+                // If mapping hasn't been written to disk before, fill memory with zeros
                     byte[] data = new byte[1024];
                     OS.WriteToMemory(virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber, data);
                 }
