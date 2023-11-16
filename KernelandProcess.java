@@ -110,6 +110,7 @@ public class KernelandProcess {
                 }
                 // If mapping with new physical page has been previously written to disk, read in data from disk and rewrite to memory
                 if (virtualToPhysicalPageMap[virtualPageNumber].diskPageNumber != -1) {
+                    // IT HAS TO BE HERE SOMEWHERE!!!
                     byte[] data = OS.ReadFromDisk(virtualToPhysicalPageMap[virtualPageNumber].diskPageNumber);
                     OS.WriteToMemory(virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber, data);
                 }

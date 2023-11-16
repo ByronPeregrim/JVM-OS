@@ -37,7 +37,7 @@ public class Ping extends UserlandProcess {
             }
             // Sleep for length of interrupt cycle, so process does not run more than once per cycle
             try {
-                Thread.sleep(520); // sleep for 260 ms
+                Thread.sleep(260); // sleep for 260 ms
             } catch (Exception e) {
                 System.err.println("Ping: run: Error while attempting to sleep.");
                 e.printStackTrace();

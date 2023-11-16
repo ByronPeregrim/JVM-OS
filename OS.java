@@ -108,7 +108,7 @@ public class OS {
     public static byte[] ReadFromMemory(int victimsPhysicalPage) {
         byte[] data = new byte[1024];
         int index = 0;
-        for (int i = victimsPhysicalPage; i < victimsPhysicalPage + 1024; i++) {
+        for (int i = victimsPhysicalPage*1024; i < (victimsPhysicalPage*1024) + 1024; i++) {
             data[index] = UserlandProcess.memory[i];
             index++;
         }
@@ -117,7 +117,7 @@ public class OS {
 
     public static void WriteToMemory(int physicalPageNumber, byte[] data) {
         int index = 0;
-        for (int i = physicalPageNumber; i < physicalPageNumber + 1024; i++) {
+        for (int i = physicalPageNumber*1024; i < (physicalPageNumber*1024) + 1024; i++) {
             UserlandProcess.memory[i] = data[index];
             index++;
         }

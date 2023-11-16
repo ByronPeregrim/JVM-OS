@@ -37,7 +37,7 @@ public class Scheduler {
 
     public Scheduler() {
         // Set timer to switch processes every 250ms
-        timer.schedule(new Interrupt(),500,500);
+        timer.schedule(new Interrupt(),250,250);
     }
 
     public int CreateProcess(UserlandProcess up,OS.Priority priority, boolean callSleep) {

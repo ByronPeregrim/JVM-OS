@@ -13,7 +13,7 @@ public class GoodbyeWorld extends UserlandProcess {
             //System.out.println("Goodbye world. Read Result: " + Read(start_address+3000)); // Test reading from memory that has not been allocated
             //System.out.println("Goodbye world. Read Result: " + Read(30)); // Test reading from memory that has not been written to
             try {
-                Thread.sleep(100); // sleep for 50 ms
+                Thread.sleep(50); // sleep for 50 ms
             } catch (Exception e) {
                 System.err.println("GoodbyeWorld: run: Error while attempting to sleep.");
                 e.printStackTrace();

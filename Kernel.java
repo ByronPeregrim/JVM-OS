@@ -178,8 +178,7 @@ public class Kernel implements Device {
     public int WriteToDisk(byte[] data) {
         VFS.Seek(swapFileId, nextDiskPage*1024);
         VFS.Write(swapFileId, data);
-        int newDiskPageNumber = nextDiskPage;
-        nextDiskPage++;
+        int newDiskPageNumber = nextDiskPage++;
         return newDiskPageNumber;
     }
 

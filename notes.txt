@@ -45,4 +45,16 @@ A little less than half of the Piggys memory is being overwritten with zeros.
         There is some issue that occurs in the process of writing a mappings physical memory out to disk,
         and then reading it back in once that process is activated again. Processes are reading in zeros
         when they should be reading in the bytes that were read in from the disk.
+
+        Piggy2 is fucking up in the Read after its been overwritten, its physical page has been set to -1, its disk page set
+        to the disk page number, and its physical page written to disk. WHich ive tested and 
+        all of that appears to be working. So I'm thinking that the issue occurs after the Read is initiated.
+        
+        Not finding anything written in the data read from disk.
+
+        Scheduler : 387 :  Data is getting moved all out of frame. The byte that is written to the disk should
+        be at the same offset from the page. Instead, the disk is reading it at an offset all over the place.
+        So when the data is being written to the disk. it is not being aligned properly with each page.
+
+        HEHEHEHEH I DID IT. ReadFromMemory and WriteToMemory were not converting page number to physical address...
         

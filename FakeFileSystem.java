@@ -74,19 +74,21 @@ public class FakeFileSystem implements Device {
             current.write(data);
             return 0;
         } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("FakeFileSystem: Write: IOException.");
+            System.exit(4);
             return -1;
         }
     }
 
     public void Seek(int id, int to) {
         // Open up file located at index, id. Offset file-pointer to second argument
-        RandomAccessFile current = array[id];
         try {
-            current.seek((long)to);
+            array[id].seek((long)to);
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("FakeFileSystem: Seek: IOException.");
-            System.exit(4);
+            System.exit(5);
         }
     }
 }
