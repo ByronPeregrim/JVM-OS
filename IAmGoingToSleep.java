@@ -8,7 +8,7 @@ public class IAmGoingToSleep extends UserlandProcess {
         while (true) {
             System.out.println("I Am Going To Sleep");
             try {
-                Thread.sleep(50); // sleep for 50 ms
+                Thread.sleep(100); // sleep for 50 ms
             } catch (Exception e) {
                 System.err.println("IAmGoingToSleep: run: Error while attempting to sleep.");
                 e.printStackTrace();

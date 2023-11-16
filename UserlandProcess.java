@@ -52,7 +52,7 @@ public abstract class UserlandProcess implements Runnable {
                     break;
                 }
             }
-            if (physicalPageNumber != -1) { // Page was found
+            if (physicalPageNumber > -1) { // Page was found
                 physicalAddress = (physicalPageNumber * 1024) + pageOffset;
             }
             else { // Page was not found

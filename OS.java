@@ -70,6 +70,8 @@ public class OS {
             return kernel.AllocateMemory(size);
         }
         else {
+            System.err.println("OS: AllocateMemory: Failed to allocate memory.");
+            System.exit(0);
             return -1; // Failure
         }
     }

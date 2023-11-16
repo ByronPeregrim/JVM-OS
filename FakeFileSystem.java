@@ -24,7 +24,10 @@ public class FakeFileSystem implements Device {
         RandomAccessFile newRandomAccessFile;
         try {
             newRandomAccessFile = new RandomAccessFile(string, "rw");
-        } catch (FileNotFoundException e) {
+            if (string.equals("swap.dat")) {
+                newRandomAccessFile.setLength(0);
+            }
+        } catch (IOException e) {
             System.err.println("FakeFileSystem: Open: File: " + string + " not found.");
             newRandomAccessFile = null;
             e.printStackTrace();

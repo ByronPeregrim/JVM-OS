@@ -1,0 +1,48 @@
+PageSwap:
+    GetRandomProcess:
+        processMap size gets smaller and smaller. Reducing the number of
+        processes to get from random process. The process array gets smaller
+        and smaller, so the # of processes with an active physical page gets smaller
+        and smaller, until eventually the process array is 0 and the while loop 
+        gets stuck in an infinite loop because virtualIndex is perpetually -1
+
+How to fix?
+    Figure out why processMap is getting smaller and smaller. 
+    Fixed issue. HashMap copy was affecting original when changed.
+
+A little less than half of the Piggys memory is being overwritten with zeros.
+    Possible Causes? 
+        When a process reads, it takes a virtual address. It checks TLB for the corresponding
+        physical address. If its not there, it does a GetMapping. GetMapping is an OS call
+        that goes all the way down to the KernelandProcess.
+        in KernelandProcess, GetMapping checks virtToPhysPageMap for a physicalPageNumber 
+        at the given virtual index. If it doesnt exists, checks for unused physical page in the 
+        kernels boolean array. If there isnt one of those, performs a page swap.
+        Page swap is an OS call that goes down to the scheduler.
+        Page swap gets random process, and looks for active physical page in that processes virtToPhyMap.
+        If it finds an active page, it returns the virtualIndex for that page. If it does not
+        find an active page, it finds a new random process and tries again until it finds an active page.
+        The virtualMapping is returned. Data is read from physicalPage on virtualMapping.
+        Data is written to disk. Disk page number is stored in virtualMapping.
+        Page swap appears to be working as intended.
+        Back in GetMapping. I set Strings before, during, and after pageswap. Why is page swaps String
+        triggering 100 times between the strings before and after??? 
+        I forgot about the PageSwap call in the allocateMemory function in the Kernel Class.
+        Need to test that this is working properly. It is working properly, and that accounts for the large amount
+        of triggers. 
+        Page swap appears to be working properly in the KernelandProcess GetMapping function.
+        It looks for random active physical page. Reads memory from physical page and writes it to disk.
+        It stores the diskPageNumber in the victim mapping if it didnt have one already, changes the victims
+        physicalPageNumber to -1. Then it returns the victims old physical page number.
+        Now, in GetMapping after page swap, we update the physical page number.
+        Next, we check if mapping has a diskPageNumber. If it does, we read in data from that disk page 
+        and store that data in our mappings physicalPage. 
+        In the case that diskPageNumber exists, system reads data in from disk and writes to memory
+        In the case that diskPageNumber does not exists, fill memory with zeros
+        It seems that GetMapping is working as well..
+        Tracing GetMapping back to its original call in the UserlandProcess...
+
+        There is some issue that occurs in the process of writing a mappings physical memory out to disk,
+        and then reading it back in once that process is activated again. Processes are reading in zeros
+        when they should be reading in the bytes that were read in from the disk.
+        

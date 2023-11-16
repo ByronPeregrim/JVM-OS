@@ -124,15 +124,21 @@ public class Kernel implements Device {
         int num_of_pages = size / 1024;
         int[] physicalPageArray = new int[num_of_pages];
         int index = 0;
+        boolean filled = false;
         // Look for unused physical pages
         for (int i = 0; i < activePhysicalPages.length; i++) {
             if (activePhysicalPages[i] == false) {
-                physicalPageArray[index] = i;
-                index += 1;
+                physicalPageArray[index++] = i;
                 activePhysicalPages[i] = true;
             }
             if (index >= num_of_pages) {
+                filled = true;
                 break;
+            }
+        }
+        if (!filled) {
+            while (index < num_of_pages) {
+                physicalPageArray[index++] = PageSwap(); 
             }
         }
         // Convert physical pages to a continuous set of virtual pages

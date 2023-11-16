@@ -6,6 +6,7 @@ import java.util.TimerTask;
 import java.time.Clock;
 import java.util.Random;
 import java.util.List;
+import java.util.Map;
 
 public class Scheduler {
 
@@ -36,7 +37,7 @@ public class Scheduler {
 
     public Scheduler() {
         // Set timer to switch processes every 250ms
-        timer.schedule(new Interrupt(),250,250);
+        timer.schedule(new Interrupt(),500,500);
     }
 
     public int CreateProcess(UserlandProcess up,OS.Priority priority, boolean callSleep) {
@@ -195,7 +196,7 @@ public class Scheduler {
             nextProcess.run();
             currentProcess = nextProcess;
             try {
-                Thread.sleep(250); // sleep for 250 ms
+                Thread.sleep(500); // sleep for 250 ms
             } catch (Exception e) {
                 System.err.println("Scheduler: CheckForSleepAndRun: Failed to sleep.");
                 System.exit(0);
@@ -357,35 +358,44 @@ public class Scheduler {
         currentProcess.KillProcess();
     }
 
+    public HashMap<Integer, KernelandProcess> CopyHashMap(HashMap<Integer, KernelandProcess> original) {
+    HashMap<Integer, KernelandProcess> copy = new HashMap<Integer, KernelandProcess>();
+    for (Map.Entry<Integer, KernelandProcess> entry : original.entrySet()) {
+        copy.put(entry.getKey(), entry.getValue());
+    }
+    return copy;
+}
+
     public KernelandProcess GetRandomProcess() {
         // Convert process map to array and return array value at random index
-        Object[] processes = PIDToProcessMap.values().toArray();
+        HashMap<Integer,KernelandProcess> processMap = CopyHashMap(PIDToProcessMap);
+        // Remove current process before converting to array
+        processMap.remove(currentProcess.GetPID());
+        Object[] processes = processMap.values().toArray();
         return (KernelandProcess) processes[rand.nextInt(processes.length)];
     }
 
     public int PageSwap() {
-        int virtualIndex = -1;
+        VirtualToPhysicalMapping victimMapping = null;
         KernelandProcess randomProcess = null;
         // Search through processes for an active physical page
-        while (virtualIndex == -1) {
+        while (victimMapping == null) {
             randomProcess = GetRandomProcess();
-            virtualIndex = randomProcess.LookForActivePhysicalPage();
+            victimMapping = randomProcess.LookForVictimMapping();
         }
-        VirtualToPhysicalMapping victim = randomProcess.GetMappingObject(virtualIndex);
         // Write victim's physical memory to disk.
-        byte[] data = OS.ReadFromMemory(victim.physicalPageNumber);
-        if (victim.diskPageNumber != -1) {
-            OS.WriteToDisk(victim.diskPageNumber, data);
+        byte[] data = OS.ReadFromMemory(victimMapping.physicalPageNumber);
+        if (victimMapping.diskPageNumber != -1) {
+            OS.WriteToDisk(victimMapping.diskPageNumber, data);
         }
         else {
             int newDiskPageNumber = OS.WriteToDisk(data);
-            victim.diskPageNumber = newDiskPageNumber;
+            victimMapping.diskPageNumber = newDiskPageNumber;
         }
-        int victimsPhysicalPage = victim.physicalPageNumber;
-        victim.physicalPageNumber = -1;
-        randomProcess.SetMappingObject(virtualIndex, victim);
+        int victimMappingsPhysicalPage = victimMapping.physicalPageNumber;
+        victimMapping.physicalPageNumber = -1;
         // Return physical page taken from victim
-        return victimsPhysicalPage;
+        return victimMappingsPhysicalPage;
     }
 
 }

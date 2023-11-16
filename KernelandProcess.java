@@ -1,4 +1,6 @@
 import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.Random;
 
 public class KernelandProcess {
 
@@ -10,6 +12,7 @@ public class KernelandProcess {
     private OS.Priority priority;
     private boolean callsSleep = false;
     private int[] VFS_ID_Array = new int[10];
+    private Random rand = new Random();
     private String name;
     private LinkedList<KernelMessage> messageQueue = new LinkedList<KernelMessage>();
     private VirtualToPhysicalMapping[] virtualToPhysicalPageMap = new VirtualToPhysicalMapping[100]; // Index is virtual page number, value is physical page number
@@ -101,8 +104,7 @@ public class KernelandProcess {
                 if (freePage != -1) {
                     virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber = freePage;
                 }
-                else {
-                    // If no unused pages, write random page to disk to free
+                else { // If no unused pages, write random page to disk to free up space
                     int victimsOldPageNumber = OS.PageSwap();
                     virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber = victimsOldPageNumber;
                 }
@@ -185,21 +187,21 @@ public class KernelandProcess {
         thread_stopped = true;
     }
 
-    public int LookForActivePhysicalPage() {
+    public VirtualToPhysicalMapping LookForVictimMapping() {
+        ArrayList<Integer> array = new ArrayList<>();
+        // Adds virtualPageNumbers to array
         for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
-            if (virtualToPhysicalPageMap[i].physicalPageNumber != -1) {
-                return i;
+            if (virtualToPhysicalPageMap[i] != null && virtualToPhysicalPageMap[i].physicalPageNumber != -1) {
+                array.add(i);
             }
         }
-        return -1;
-    }
-
-    public VirtualToPhysicalMapping GetMappingObject(int index) {
-        return virtualToPhysicalPageMap[index];
-    }
-
-    public void SetMappingObject(int index, VirtualToPhysicalMapping object) {
-        virtualToPhysicalPageMap[index] = object;
+        if (array.size() <= 0) {
+            return null;
+        }
+        else {
+            // Returns random virtualPageNumber from array
+            return virtualToPhysicalPageMap[array.get(rand.nextInt((array.size())))];
+        }
     }
 
     public void run() {

@@ -11,7 +11,7 @@ public class HelloWorld extends UserlandProcess {
         while (true) {
             System.out.println("Hello world. Read Result: " + Read(start_address+1000));
             try {
-                Thread.sleep(50); // sleep for 50 ms
+                Thread.sleep(100); // sleep for 50 ms
             } catch (Exception e) {
                 System.err.println("HelloWorld: run: Error while attempting to sleep.");
                 e.printStackTrace();
