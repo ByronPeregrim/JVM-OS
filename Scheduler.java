@@ -359,17 +359,17 @@ public class Scheduler {
     }
 
     public HashMap<Integer, KernelandProcess> CopyHashMap(HashMap<Integer, KernelandProcess> original) {
-    HashMap<Integer, KernelandProcess> copy = new HashMap<Integer, KernelandProcess>();
-    for (Map.Entry<Integer, KernelandProcess> entry : original.entrySet()) {
-        copy.put(entry.getKey(), entry.getValue());
+        HashMap<Integer, KernelandProcess> copy = new HashMap<Integer, KernelandProcess>();
+        for (Map.Entry<Integer, KernelandProcess> entry : original.entrySet()) {
+            copy.put(entry.getKey(), entry.getValue());
+        }
+        return copy;
     }
-    return copy;
-}
 
     public KernelandProcess GetRandomProcess() {
-        // Convert process map to array and return array value at random index
+        // Copy hash map so original is not affected
         HashMap<Integer,KernelandProcess> processMap = CopyHashMap(PIDToProcessMap);
-        // Remove current process before converting to array
+        // Remove current process before converting to array so recently written memory is not overwritten
         processMap.remove(currentProcess.GetPID());
         Object[] processes = processMap.values().toArray();
         return (KernelandProcess) processes[rand.nextInt(processes.length)];

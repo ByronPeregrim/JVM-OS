@@ -110,12 +110,11 @@ public class KernelandProcess {
                 }
                 // If mapping with new physical page has been previously written to disk, read in data from disk and rewrite to memory
                 if (virtualToPhysicalPageMap[virtualPageNumber].diskPageNumber != -1) {
-                    // IT HAS TO BE HERE SOMEWHERE!!!
                     byte[] data = OS.ReadFromDisk(virtualToPhysicalPageMap[virtualPageNumber].diskPageNumber);
                     OS.WriteToMemory(virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber, data);
                 }
                 else {
-                // If mapping hasn't been written to disk before, fill memory with zeros
+                // Otherwise, fill memory with zeros
                     byte[] data = new byte[1024];
                     OS.WriteToMemory(virtualToPhysicalPageMap[virtualPageNumber].physicalPageNumber, data);
                 }
@@ -131,7 +130,7 @@ public class KernelandProcess {
     public int AllocateMemory(int[] physicalPagesArray) {
         int counter = 0;
         /* Looks for a gap in the virtualToPhysicalPageMap array large enough to store all of the pages
-           in the input array in a continuous fashion, then, once found, stores those pages. */
+           in the input array in a continuous fashion */
         for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
             if (virtualToPhysicalPageMap[i] == null) {
                 counter += 1;
@@ -141,7 +140,6 @@ public class KernelandProcess {
             }
             if (counter >= physicalPagesArray.length) {
                 counter = 0;
-                // When a large enough gap is found, pointer goes to beginning of gap and begins initializing VirtualMappings
                 for (int j = i - physicalPagesArray.length + 1; j < i+1; j++) {
                     virtualToPhysicalPageMap[j] = new VirtualToPhysicalMapping();
                     virtualToPhysicalPageMap[j].physicalPageNumber = physicalPagesArray[counter++];
@@ -155,7 +153,7 @@ public class KernelandProcess {
     public int[] FreeMemory(int virtualPage, int numberOfPages) {
         int[] physicalPageArray = new int[numberOfPages];
         int index = 0;
-        // Free virtual pages, create and return array of corresponding physical pages to be freed
+        // Create and return array of corresponding physical pages to be freed
         for (int i = virtualPage; i < virtualPage + numberOfPages; i++) {
             if (virtualToPhysicalPageMap[i].physicalPageNumber != -1) {
                 physicalPageArray[index++] = virtualToPhysicalPageMap[i].physicalPageNumber;
@@ -168,15 +166,14 @@ public class KernelandProcess {
     public int[] FreeAllPages() {
         VirtualToPhysicalMapping[] tempArray = new VirtualToPhysicalMapping[100];
         int index = 0;
+        // Create temp array to generate array of appropriate size to hold required amount of physical pages
         for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
             if (virtualToPhysicalPageMap[i] != null) {
-                // Store physical pages numbers in a temp array
                 tempArray[index] = virtualToPhysicalPageMap[i];
                 index += 1;
                 virtualToPhysicalPageMap[i] = null;
             }
         }
-        // Creates appropriately sized array containing physical pages corresponding to freed virtual pages
         int[] physicalPageArray = new int[index];
         for (int i = 0; i < index; i++) {
             physicalPageArray[i] = tempArray[i].physicalPageNumber;
@@ -190,7 +187,7 @@ public class KernelandProcess {
 
     public VirtualToPhysicalMapping LookForVictimMapping() {
         ArrayList<Integer> array = new ArrayList<>();
-        // Adds virtualPageNumbers to array
+        // Adds virtualPageNumbers with active physical pages to array
         for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
             if (virtualToPhysicalPageMap[i] != null && virtualToPhysicalPageMap[i].physicalPageNumber != -1) {
                 array.add(i);

@@ -26,11 +26,10 @@ public class Kernel implements Device {
         System.out.println(currentProcess + " " + currentProcess.GetPriority());
         for (int i = 0; i < VFS_ID_Array.length; i++) {
             if (VFS_ID_Array[i] == -1) {
-                // If an empty spot is found, pass open call to VFS
+                // Open file if VFS array contains empty spot
                 int VFS_ID;
                 VFS_ID = VFS.Open(string);
-                // If VFS returns -1, fail
-                if (VFS_ID == -1) {
+                if (VFS_ID == -1) { // File failed to open
                     return -1;
                 }
                 else {
@@ -41,16 +40,15 @@ public class Kernel implements Device {
                 }
             }
         }
-        // If array is full, fail
+        // Fails if array is full
         return -1;
     }
 
     public void Close(int id) {
-        // Retrieve VFS_ID from Kerneland.
+        // Retrieve VFS_ID from current process
         KernelandProcess currentProcess = scheduler.getCurrentlyRunning();
         int[] VFS_ID_Array = currentProcess.Get_VFS_ID_Array();
         int VFS_ID = VFS_ID_Array[id];
-        // Pass Kernel call through to VFS
         VFS.Close(VFS_ID);
         VFS_ID_Array[id] = -1;
         currentProcess.Set_VFS_ID_Array(VFS_ID_Array);
@@ -120,12 +118,11 @@ public class Kernel implements Device {
     }
 
     public int AllocateMemory(int size) {
-        // Page size = 1024 bytes
         int num_of_pages = size / 1024;
         int[] physicalPageArray = new int[num_of_pages];
         int index = 0;
         boolean filled = false;
-        // Look for unused physical pages
+        // Gather list of unused physical pages
         for (int i = 0; i < activePhysicalPages.length; i++) {
             if (activePhysicalPages[i] == false) {
                 physicalPageArray[index++] = i;
@@ -136,7 +133,7 @@ public class Kernel implements Device {
                 break;
             }
         }
-        if (!filled) {
+        if (!filled) { // If there aren't enough unused physical pages, page swap to get more
             while (index < num_of_pages) {
                 physicalPageArray[index++] = PageSwap(); 
             }
@@ -156,7 +153,6 @@ public class Kernel implements Device {
     }
 
     public void FreeActivePages(int[] physicalPageArray) {
-        // Free ALL active pages
         for (int i = 0; i < physicalPageArray.length; i++) {
             activePhysicalPages[physicalPageArray[i]] = false;
         }

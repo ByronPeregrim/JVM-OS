@@ -108,6 +108,7 @@ public class OS {
     public static byte[] ReadFromMemory(int victimsPhysicalPage) {
         byte[] data = new byte[1024];
         int index = 0;
+        // Goes to start of physical page in memory and reads entire page
         for (int i = victimsPhysicalPage*1024; i < (victimsPhysicalPage*1024) + 1024; i++) {
             data[index] = UserlandProcess.memory[i];
             index++;

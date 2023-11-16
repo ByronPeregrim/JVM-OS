@@ -24,6 +24,7 @@ public class FakeFileSystem implements Device {
         RandomAccessFile newRandomAccessFile;
         try {
             newRandomAccessFile = new RandomAccessFile(string, "rw");
+            // If file opened is swap file, erase all contents
             if (string.equals("swap.dat")) {
                 newRandomAccessFile.setLength(0);
             }
@@ -33,7 +34,6 @@ public class FakeFileSystem implements Device {
             e.printStackTrace();
             System.exit(1);
         }
-        // Places RandomAccessFile into first open index in array
         for (i = 0; i < array.length; i++) {
             if (array[i] == null) {
                 array[i] = newRandomAccessFile;
@@ -82,7 +82,7 @@ public class FakeFileSystem implements Device {
     }
 
     public void Seek(int id, int to) {
-        // Open up file located at index, id. Offset file-pointer to second argument
+        // Offset file-pointer to second argument
         try {
             array[id].seek((long)to);
         } catch (IOException e) {
