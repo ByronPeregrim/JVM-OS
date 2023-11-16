@@ -11,6 +11,17 @@ public class FakeFileSystem implements Device {
         
     }
 
+    public void Close(int id) {
+        try {
+            array[id].close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("FakeFileSystem: Close: IOException.");
+            System.exit(2);
+        }
+        array[id] = null;
+    }
+
     public int Open(String string) {
         if (string == null || string == "") {
             try {
@@ -20,7 +31,6 @@ public class FakeFileSystem implements Device {
                 e.printStackTrace();
             }
         }
-        int i = 0;
         RandomAccessFile newRandomAccessFile;
         try {
             newRandomAccessFile = new RandomAccessFile(string, "rw");
@@ -34,6 +44,7 @@ public class FakeFileSystem implements Device {
             e.printStackTrace();
             System.exit(1);
         }
+        int i = 0;
         for (i = 0; i < array.length; i++) {
             if (array[i] == null) {
                 array[i] = newRandomAccessFile;
@@ -41,17 +52,6 @@ public class FakeFileSystem implements Device {
             }
         }
         return i;
-    }
-
-    public void Close(int id) {
-        try {
-            array[id].close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("FakeFileSystem: Close: IOException.");
-            System.exit(2);
-        }
-        array[id] = null;
     }
 
     public byte[] Read(int id, int size) {
@@ -65,6 +65,17 @@ public class FakeFileSystem implements Device {
             System.exit(3);
         }
         return byteArray;
+    }
+
+    public void Seek(int id, int to) {
+        // Offset file-pointer to second argument
+        try {
+            array[id].seek((long)to);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("FakeFileSystem: Seek: IOException.");
+            System.exit(5);
+        }
     }
 
     public int Write(int id, byte[] data) {
@@ -81,14 +92,4 @@ public class FakeFileSystem implements Device {
         }
     }
 
-    public void Seek(int id, int to) {
-        // Offset file-pointer to second argument
-        try {
-            array[id].seek((long)to);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("FakeFileSystem: Seek: IOException.");
-            System.exit(5);
-        }
-    }
 }

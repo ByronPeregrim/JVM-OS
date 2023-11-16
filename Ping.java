@@ -25,10 +25,10 @@ public class Ping extends UserlandProcess {
                 if (km != null) {
                     KernelMessage copy = new KernelMessage(km);
                     // Increase message value by 1
-                    copy.setMessage(km.getMessage()+1);
+                    copy.SetMessage(km.GetMessage()+1);
                     // Swap sender and target PID
-                    copy.setSenderPID(km.getTargetPID());
-                    copy.setTargetPID(km.getSenderPID());
+                    copy.SetSenderPID(km.GetTargetPID());
+                    copy.SetTargetPID(km.GetSenderPID());
                     System.out.print("PING ");
                     copy.ToString();
                     // Send new message back to sender

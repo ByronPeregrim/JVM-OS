@@ -40,6 +40,88 @@ public class Scheduler {
         timer.schedule(new Interrupt(),250,250);
     }
 
+    public void AddToWaitingProcesses(KernelandProcess inputProcess) {
+        waitingProcesses.put(inputProcess.GetPID(), inputProcess);
+    }
+
+    public int AllocateMemory(int[] physicalPagesArray) {
+        return currentProcess.AllocateMemory(physicalPagesArray);
+    }
+
+    public void CheckForDemotion(KernelandProcess nextProcess) {
+        // If same process is called 5 times in a row, demote process priority.
+        if (nextProcess == currentProcess) {
+            demotionCounter += 1;
+            if (demotionCounter >= 5) {
+                RemoveFromProcessList(nextProcess);
+                switch (nextProcess.GetPriority()) {
+                    case REALTIME:
+                        nextProcess.SetPriority(OS.Priority.INTERACTIVE);
+                        interactiveProcessList.add(interactiveProcessList.size(), nextProcess);
+                        System.out.println("~~~~Demoted REALTIME process " + nextProcess.GetName() + " to INTERACTIVE~~~~");
+                        break;
+                    case INTERACTIVE:
+                        nextProcess.SetPriority(OS.Priority.BACKGROUND);
+                        backgroundProcessList.add(backgroundProcessList.size(), nextProcess);
+                        System.out.println("~~~~Demoted INTERACTIVE process " + nextProcess.GetName() + " to BACKGROUND~~~~");
+                        break;
+                    case BACKGROUND:
+                        break;
+                }
+                demotionCounter = 0;
+            }
+        }
+        else {
+            demotionCounter = 0;
+        }
+    }
+
+    public void CheckForSleepAndRun(KernelandProcess nextProcess) { // Calls sleep if process was told, during initiation, to call sleep
+        currentProcess = nextProcess;
+        if (nextProcess.CallsSleep()) {
+            nextProcess.run();
+            currentProcess = nextProcess;
+            try {
+                Thread.sleep(500); // sleep for 250 ms
+            } catch (Exception e) {
+                System.err.println("Scheduler: CheckForSleepAndRun: Failed to sleep.");
+                System.exit(0);
+             }
+            Sleep(3000); // Sleeps for 3 seconds
+        }
+        else {
+            nextProcess.run();
+            currentProcess = nextProcess;
+        }
+    }
+
+    public void CheckIfWaitingAndRestore(KernelandProcess inputProcess) {
+        // If process is waiting, remove from waiting list and restore to process list corresponding to priority
+        if (waitingProcesses.containsKey(inputProcess.GetPID())) {
+            KernelandProcess restoredProcess = waitingProcesses.get(inputProcess.GetPID());
+            waitingProcesses.remove(inputProcess.GetPID());
+            switch (restoredProcess.GetPriority()) {
+                case REALTIME:
+                    realtimeProcessList.add(restoredProcess);
+                    break;
+                case INTERACTIVE:
+                    interactiveProcessList.add(restoredProcess);
+                    break;
+                case BACKGROUND:
+                    backgroundProcessList.add(restoredProcess);
+                    break;
+            }
+        }
+    }
+
+    public HashMap<Integer, KernelandProcess> CopyHashMap(HashMap<Integer, KernelandProcess> original) {
+        HashMap<Integer, KernelandProcess> copy = new HashMap<Integer, KernelandProcess>();
+        for (Map.Entry<Integer, KernelandProcess> entry : original.entrySet()) {
+            copy.put(entry.getKey(), entry.getValue());
+        }
+        return copy;
+    }
+
     public int CreateProcess(UserlandProcess up,OS.Priority priority, boolean callSleep) {
         // Create new process and add to end of process list corresponding to process priority.
         KernelandProcess newProcess = new KernelandProcess(up,priority,callSleep);
@@ -79,59 +161,16 @@ public class Scheduler {
         return newProcess.GetPID();
     }
 
-    public void SwitchProcess() {
-        // Stop any running processes
-        StopProcess();
-        StopWaitingProcesses();
-        WakeUpSleepingProcesses();
-        OS.ClearTLB();
-        // Next process determined by priority queue
-        KernelandProcess nextProcess = GetNextProcess();
-        if (nextProcess != null) {
-            CheckForDemotion(nextProcess);
-            CheckForSleepAndRun(nextProcess);
-        }
+    public int[] FreeMemory(int virtualPageNumber, int numberOfPages) {
+        return currentProcess.FreeMemory(virtualPageNumber, numberOfPages);
     }
 
-    public void StopProcess() {
-        // Suspend currently running process. If process isn't finished, add to end of process list.
-        if (currentProcess != null && currentProcess.IsRunning()) {
-            currentProcess.Stop();
-            if (!currentProcess.IsDone()) {
-                RemoveFromProcessList(currentProcess);
-                switch (currentProcess.GetPriority()) {
-                    case REALTIME:
-                        realtimeProcessList.add(realtimeProcessList.size(),currentProcess);
-                        break;
-                    case BACKGROUND:
-                        backgroundProcessList.add(backgroundProcessList.size(),currentProcess);
-                        break;
-                    case INTERACTIVE:
-                        interactiveProcessList.add(interactiveProcessList.size(),currentProcess);
-                        break;
-                }
-            }
-            else {
-                // If process is done, close all devices and remove from maps and process list
-                int[] open_device_IDs = currentProcess.Get_VFS_ID_Array();
-                for (int j = 0; j < open_device_IDs.length; j++) {
-                    if (open_device_IDs[j] != -1) {
-                        kernel.Close(open_device_IDs[j]);
-                    }
-                }
-                PIDToProcessMap.remove(currentProcess.GetPID());
-                nameToPIDMap.remove(currentProcess.GetName());
-                RemoveFromProcessList(currentProcess);
-            }
-        }
+    public KernelandProcess GetCurrentlyRunning() {
+        return currentProcess;
     }
 
-    public void StopWaitingProcesses() {
-        waitingProcesses.forEach((k,v) -> {
-            if (v.IsRunning()) {
-                v.Stop();
-            }
-        });
+    public void GetMapping(int virtualPageNumber) {
+        currentProcess.GetMapping(virtualPageNumber);
     }
 
     public KernelandProcess GetNextProcess() {
@@ -190,34 +229,55 @@ public class Scheduler {
         return nextProcess;
     }
 
-    public void CheckForSleepAndRun(KernelandProcess nextProcess) { // Calls sleep if process was told, during initiation, to call sleep
-        currentProcess = nextProcess;
-        if (nextProcess.CallsSleep()) {
-            nextProcess.run();
-            currentProcess = nextProcess;
-            try {
-                Thread.sleep(500); // sleep for 250 ms
-            } catch (Exception e) {
-                System.err.println("Scheduler: CheckForSleepAndRun: Failed to sleep.");
-                System.exit(0);
-             }
-            Sleep(3000); // Sleeps for 3 seconds
-        }
-        else {
-            nextProcess.run();
-            currentProcess = nextProcess;
-        }
+    public int GetPID() {
+        return currentProcess.GetPID();
     }
 
-    public void Sleep(int milliseconds) {
-        currentProcess.SetWakeUpTime(milliseconds + (int)clock.millis());
-        sleepingProcessList.add(currentProcess);
-        RemoveFromProcessList(currentProcess);
-        // Save copy of currently running process and stop it
-        KernelandProcess tmp = currentProcess;
-        currentProcess = null;
-        tmp.Stop();
-        SwitchProcess();
+    public int GetPIDByName(String s) {
+        if (nameToPIDMap.get(s) != null) {
+            return nameToPIDMap.get(s);
+        }
+        return -1;
+    }
+
+    public KernelandProcess GetProcessByPID(int input_PID) {
+        return PIDToProcessMap.get(input_PID);
+    }
+
+    public KernelandProcess GetRandomProcess() {
+        // Copy hash map so original is not affected
+        HashMap<Integer,KernelandProcess> processMap = CopyHashMap(PIDToProcessMap);
+        // Remove current process before converting to array so recently written memory is not overwritten
+        processMap.remove(currentProcess.GetPID());
+        Object[] processes = processMap.values().toArray();
+        return (KernelandProcess) processes[rand.nextInt(processes.length)];
+    }
+
+    public void KillCurrentProcess() {
+        currentProcess.KillProcess();
+    }
+
+    public int PageSwap() {
+        VirtualToPhysicalMapping victimMapping = null;
+        KernelandProcess randomProcess = null;
+        // Search through processes for an active physical page
+        while (victimMapping == null) {
+            randomProcess = GetRandomProcess();
+            victimMapping = randomProcess.LookForVictimMapping();
+        }
+        // Write victim's physical memory to disk.
+        byte[] data = OS.ReadFromMemory(victimMapping.physicalPageNumber);
+        if (victimMapping.diskPageNumber != -1) {
+            OS.WriteToDisk(victimMapping.diskPageNumber, data);
+        }
+        else {
+            int newDiskPageNumber = OS.WriteToDisk(data);
+            victimMapping.diskPageNumber = newDiskPageNumber;
+        }
+        int victimMappingsPhysicalPage = victimMapping.physicalPageNumber;
+        victimMapping.physicalPageNumber = -1;
+        // Return physical page taken from victim
+        return victimMappingsPhysicalPage;
     }
 
     public void RemoveFromProcessList(KernelandProcess inputCurrentProcess) {
@@ -249,31 +309,69 @@ public class Scheduler {
         }
     }
 
-    public void CheckForDemotion(KernelandProcess nextProcess) {
-        // If same process is called 5 times in a row, demote process priority.
-        if (nextProcess == currentProcess) {
-            demotionCounter += 1;
-            if (demotionCounter >= 5) {
-                RemoveFromProcessList(nextProcess);
-                switch (nextProcess.GetPriority()) {
+    public void Sleep(int milliseconds) {
+        currentProcess.SetWakeUpTime(milliseconds + (int)clock.millis());
+        sleepingProcessList.add(currentProcess);
+        RemoveFromProcessList(currentProcess);
+        // Save copy of currently running process and stop it
+        KernelandProcess tmp = currentProcess;
+        currentProcess = null;
+        tmp.Stop();
+        SwitchProcess();
+    }
+
+    public void StopProcess() {
+        // Suspend currently running process. If process isn't finished, add to end of process list.
+        if (currentProcess != null && currentProcess.IsRunning()) {
+            currentProcess.Stop();
+            if (!currentProcess.IsDone()) {
+                RemoveFromProcessList(currentProcess);
+                switch (currentProcess.GetPriority()) {
                     case REALTIME:
-                        nextProcess.SetPriority(OS.Priority.INTERACTIVE);
-                        interactiveProcessList.add(interactiveProcessList.size(), nextProcess);
-                        System.out.println("~~~~Demoted REALTIME process " + nextProcess.GetName() + " to INTERACTIVE~~~~");
-                        break;
-                    case INTERACTIVE:
-                        nextProcess.SetPriority(OS.Priority.BACKGROUND);
-                        backgroundProcessList.add(backgroundProcessList.size(), nextProcess);
-                        System.out.println("~~~~Demoted INTERACTIVE process " + nextProcess.GetName() + " to BACKGROUND~~~~");
+                        realtimeProcessList.add(realtimeProcessList.size(),currentProcess);
                         break;
                     case BACKGROUND:
+                        backgroundProcessList.add(backgroundProcessList.size(),currentProcess);
+                        break;
+                    case INTERACTIVE:
+                        interactiveProcessList.add(interactiveProcessList.size(),currentProcess);
                         break;
                 }
-                demotionCounter = 0;
+            }
+            else {
+                // If process is done, close all devices and remove from maps and process list
+                int[] open_device_IDs = currentProcess.Get_VFS_ID_Array();
+                for (int j = 0; j < open_device_IDs.length; j++) {
+                    if (open_device_IDs[j] != -1) {
+                        kernel.Close(open_device_IDs[j]);
+                    }
+                }
+                PIDToProcessMap.remove(currentProcess.GetPID());
+                nameToPIDMap.remove(currentProcess.GetName());
+                RemoveFromProcessList(currentProcess);
             }
         }
-        else {
-            demotionCounter = 0;
+    }
+
+    public void StopWaitingProcesses() {
+        waitingProcesses.forEach((k,v) -> {
+            if (v.IsRunning()) {
+                v.Stop();
+            }
+        });
+    }
+
+    public void SwitchProcess() {
+        // Stop any running processes
+        StopProcess();
+        StopWaitingProcesses();
+        WakeUpSleepingProcesses();
+        OS.ClearTLB();
+        // Next process determined by priority queue
+        KernelandProcess nextProcess = GetNextProcess();
+        if (nextProcess != null) {
+            CheckForDemotion(nextProcess);
+            CheckForSleepAndRun(nextProcess);
         }
     }
 
@@ -299,103 +397,4 @@ public class Scheduler {
             }
         }
     }
-
-    public KernelandProcess getCurrentlyRunning() {
-        return currentProcess;
-    }
-
-    public int GetPID() {
-        return currentProcess.GetPID();
-    }
-
-    public int GetPIDByName(String s) {
-        if (nameToPIDMap.get(s) != null) {
-            return nameToPIDMap.get(s);
-        }
-        return -1;
-    }
-
-    public KernelandProcess GetProcessByPID(int input_PID) {
-        return PIDToProcessMap.get(input_PID);
-    }    
-
-    public void AddToWaitingProcesses(KernelandProcess inputProcess) {
-        waitingProcesses.put(inputProcess.GetPID(), inputProcess);
-    }
-
-    public void CheckIfWaitingAndRestore(KernelandProcess inputProcess) {
-        // If process is waiting, remove from waiting list and restore to process list corresponding to priority
-        if (waitingProcesses.containsKey(inputProcess.GetPID())) {
-            KernelandProcess restoredProcess = waitingProcesses.get(inputProcess.GetPID());
-            waitingProcesses.remove(inputProcess.GetPID());
-            switch (restoredProcess.GetPriority()) {
-                case REALTIME:
-                    realtimeProcessList.add(restoredProcess);
-                    break;
-                case INTERACTIVE:
-                    interactiveProcessList.add(restoredProcess);
-                    break;
-                case BACKGROUND:
-                    backgroundProcessList.add(restoredProcess);
-                    break;
-            }
-        }
-    }
-
-    public void GetMapping(int virtualPageNumber) {
-        currentProcess.GetMapping(virtualPageNumber);
-    }
-
-    public int AllocateMemory(int[] physicalPagesArray) {
-        return currentProcess.AllocateMemory(physicalPagesArray);
-    }
-
-    public int[] FreeMemory(int virtualPageNumber, int numberOfPages) {
-        return currentProcess.FreeMemory(virtualPageNumber, numberOfPages);
-    }
-
-    public void KillCurrentProcess() {
-        currentProcess.KillProcess();
-    }
-
-    public HashMap<Integer, KernelandProcess> CopyHashMap(HashMap<Integer, KernelandProcess> original) {
-        HashMap<Integer, KernelandProcess> copy = new HashMap<Integer, KernelandProcess>();
-        for (Map.Entry<Integer, KernelandProcess> entry : original.entrySet()) {
-            copy.put(entry.getKey(), entry.getValue());
-        }
-        return copy;
-    }
-
-    public KernelandProcess GetRandomProcess() {
-        // Copy hash map so original is not affected
-        HashMap<Integer,KernelandProcess> processMap = CopyHashMap(PIDToProcessMap);
-        // Remove current process before converting to array so recently written memory is not overwritten
-        processMap.remove(currentProcess.GetPID());
-        Object[] processes = processMap.values().toArray();
-        return (KernelandProcess) processes[rand.nextInt(processes.length)];
-    }
-
-    public int PageSwap() {
-        VirtualToPhysicalMapping victimMapping = null;
-        KernelandProcess randomProcess = null;
-        // Search through processes for an active physical page
-        while (victimMapping == null) {
-            randomProcess = GetRandomProcess();
-            victimMapping = randomProcess.LookForVictimMapping();
-        }
-        // Write victim's physical memory to disk.
-        byte[] data = OS.ReadFromMemory(victimMapping.physicalPageNumber);
-        if (victimMapping.diskPageNumber != -1) {
-            OS.WriteToDisk(victimMapping.diskPageNumber, data);
-        }
-        else {
-            int newDiskPageNumber = OS.WriteToDisk(data);
-            victimMapping.diskPageNumber = newDiskPageNumber;
-        }
-        int victimMappingsPhysicalPage = victimMapping.physicalPageNumber;
-        victimMapping.physicalPageNumber = -1;
-        // Return physical page taken from victim
-        return victimMappingsPhysicalPage;
-    }
-
 }

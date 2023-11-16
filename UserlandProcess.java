@@ -3,30 +3,6 @@ public abstract class UserlandProcess implements Runnable {
     public static int[][] TLB = new int[2][2];
     public static byte[] memory = new byte[1048576];
 
-    public byte Read(int virtualAddress) {
-        // Physical address corresponds to index in memory array
-        int physicalAddress = ConvertVirtualAddressToPhysical(virtualAddress);
-        if (physicalAddress != -1) {
-            return memory[physicalAddress];
-        }
-        else {
-            System.err.println("UserlandProcess: Read: Could not READ from physical address: " + virtualAddress);
-            System.exit(0);
-            return -1;
-        }
-    }
-
-    public void Write(int virtualAddress, byte value) {
-        int physicalAddress = ConvertVirtualAddressToPhysical(virtualAddress);
-        if (physicalAddress != -1) {
-            memory[physicalAddress] = value;
-        }
-        else {
-            System.err.println("UserlandProcess: Write: Could not WRITE byte value: " + value + " to physical address: " + virtualAddress);
-            System.exit(1);
-        }
-    }
-
     public int ConvertVirtualAddressToPhysical(int virtualAddress) {
         // Page size = 1024 bytes
         int virtualPageNumber = virtualAddress / 1024;
@@ -61,5 +37,29 @@ public abstract class UserlandProcess implements Runnable {
             }
         }
         return physicalAddress;
+    }
+
+    public byte Read(int virtualAddress) {
+        // Physical address corresponds to index in memory array
+        int physicalAddress = ConvertVirtualAddressToPhysical(virtualAddress);
+        if (physicalAddress != -1) {
+            return memory[physicalAddress];
+        }
+        else {
+            System.err.println("UserlandProcess: Read: Could not READ from physical address: " + virtualAddress);
+            System.exit(0);
+            return -1;
+        }
+    }
+
+    public void Write(int virtualAddress, byte value) {
+        int physicalAddress = ConvertVirtualAddressToPhysical(virtualAddress);
+        if (physicalAddress != -1) {
+            memory[physicalAddress] = value;
+        }
+        else {
+            System.err.println("UserlandProcess: Write: Could not WRITE byte value: " + value + " to physical address: " + virtualAddress);
+            System.exit(1);
+        }
     }
 }

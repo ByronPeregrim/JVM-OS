@@ -17,28 +17,28 @@ public class KernelMessage {
          this(km.senderPID,km.targetPID,km.message);
     }
     
-    public int getMessage() {
+    public int GetMessage() {
         return message;
     }
-    
-    public void setTargetPID(int targetPID) {
-        this.targetPID = targetPID;
+
+    public int GetSenderPID() {
+        return senderPID;
     }
-    
-    public int getTargetPID() {
+
+    public int GetTargetPID() {
         return targetPID;
     }
-   
-    public void setSenderPID(int senderPID) {
+
+    public void SetMessage(int message) {
+        this.message = message;
+    }
+
+    public void SetSenderPID(int senderPID) {
         this.senderPID = senderPID;
     }
     
-    public int getSenderPID() {
-        return senderPID;
-    }
-    
-    public void setMessage(int message) {
-        this.message = message;
+    public void SetTargetPID(int targetPID) {
+        this.targetPID = targetPID;
     }
    
     public void ToString() {

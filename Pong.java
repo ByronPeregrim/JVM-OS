@@ -12,8 +12,8 @@ public class Pong extends UserlandProcess {
             if (km != null) {
                 KernelMessage newMessage = new KernelMessage(km);
                 // Swap sender and target PID
-                newMessage.setSenderPID(km.getTargetPID());
-                newMessage.setTargetPID(km.getSenderPID());
+                newMessage.SetSenderPID(km.GetTargetPID());
+                newMessage.SetTargetPID(km.GetSenderPID());
                 System.out.print("PONG ");
                 newMessage.ToString();
                 // Send new message back to sender

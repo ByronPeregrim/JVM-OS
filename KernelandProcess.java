@@ -28,72 +28,66 @@ public class KernelandProcess {
         name = up.getClass().getSimpleName();
     }
 
-    public void Stop() {
-        if (thread_started) {
-            thread.suspend();
+    public void AddToMessageQueue(KernelMessage km) {
+        messageQueue.addLast(km);
+    }
+
+    public int AllocateMemory(int[] physicalPagesArray) {
+        int counter = 0;
+        /* Looks for a gap in the virtualToPhysicalPageMap array large enough to store all of the pages
+           in the input array in a continuous fashion */
+        for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
+            if (virtualToPhysicalPageMap[i] == null) {
+                counter += 1;
+            }
+            else {
+                counter = 0;
+            }
+            if (counter >= physicalPagesArray.length) {
+                counter = 0;
+                for (int j = i - physicalPagesArray.length + 1; j < i+1; j++) {
+                    virtualToPhysicalPageMap[j] = new VirtualToPhysicalMapping();
+                    virtualToPhysicalPageMap[j].physicalPageNumber = physicalPagesArray[counter++];
+                }
+                return i - physicalPagesArray.length + 1;
+            }
         }
-    }
-
-    public boolean IsDone() {
-        if (thread_started == true && thread_stopped == true) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-    public int GetPID() {
-        return PID;
-    }
-
-    public String GetName() {
-        return name;
-    }
-
-    public boolean IsRunning() {
-        return thread.isAlive();
-    }
-
-    public int GetWakeUpTime() {
-        return wakeUpTime;
-    }
-
-    public void SetWakeUpTime(int wakeUpTime) {
-        this.wakeUpTime = wakeUpTime;
-    }
-
-    public OS.Priority GetPriority() {
-        return priority;
-    }
-
-    public void SetPriority(OS.Priority priority) {
-        this.priority = priority;
+        return -1;
     }
 
     public boolean CallsSleep() {
         return callsSleep;
     }
 
-    public int[] Get_VFS_ID_Array() {
-        return VFS_ID_Array;
-    }
-
-    public void Set_VFS_ID_Array(int[] inputArray) {
-        VFS_ID_Array = inputArray;
-    }
-
-    public void AddToMessageQueue(KernelMessage km) {
-        messageQueue.addLast(km);
-    }
-
-    public KernelMessage PopMessageQueue() {
-        if (!messageQueue.isEmpty()) {
-            return messageQueue.pop();
+    public int[] FreeAllPages() {
+        VirtualToPhysicalMapping[] tempArray = new VirtualToPhysicalMapping[100];
+        int index = 0;
+        // Create temp array to generate array of appropriate size to hold required amount of physical pages
+        for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
+            if (virtualToPhysicalPageMap[i] != null) {
+                tempArray[index] = virtualToPhysicalPageMap[i];
+                index += 1;
+                virtualToPhysicalPageMap[i] = null;
+            }
         }
-        else {
-            return null;
+        int[] physicalPageArray = new int[index];
+        for (int i = 0; i < index; i++) {
+            physicalPageArray[i] = tempArray[i].physicalPageNumber;
         }
+        return physicalPageArray;
+    }
+
+    public int[] FreeMemory(int virtualPage, int numberOfPages) {
+        int[] physicalPageArray = new int[numberOfPages];
+        int index = 0;
+        // Create and return array of corresponding physical pages to be freed
+        for (int i = virtualPage; i < virtualPage + numberOfPages; i++) {
+            if (virtualToPhysicalPageMap[i].physicalPageNumber != -1) {
+                physicalPageArray[index++] = virtualToPhysicalPageMap[i].physicalPageNumber;
+            }
+
+        }
+        return physicalPageArray;
     }
 
     public void GetMapping(int virtualPageNumber) {
@@ -127,58 +121,37 @@ public class KernelandProcess {
         }
     }
 
-    public int AllocateMemory(int[] physicalPagesArray) {
-        int counter = 0;
-        /* Looks for a gap in the virtualToPhysicalPageMap array large enough to store all of the pages
-           in the input array in a continuous fashion */
-        for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
-            if (virtualToPhysicalPageMap[i] == null) {
-                counter += 1;
-            }
-            else {
-                counter = 0;
-            }
-            if (counter >= physicalPagesArray.length) {
-                counter = 0;
-                for (int j = i - physicalPagesArray.length + 1; j < i+1; j++) {
-                    virtualToPhysicalPageMap[j] = new VirtualToPhysicalMapping();
-                    virtualToPhysicalPageMap[j].physicalPageNumber = physicalPagesArray[counter++];
-                }
-                return i - physicalPagesArray.length + 1;
-            }
-        }
-        return -1;
+    public String GetName() {
+        return name;
     }
 
-    public int[] FreeMemory(int virtualPage, int numberOfPages) {
-        int[] physicalPageArray = new int[numberOfPages];
-        int index = 0;
-        // Create and return array of corresponding physical pages to be freed
-        for (int i = virtualPage; i < virtualPage + numberOfPages; i++) {
-            if (virtualToPhysicalPageMap[i].physicalPageNumber != -1) {
-                physicalPageArray[index++] = virtualToPhysicalPageMap[i].physicalPageNumber;
-            }
-
-        }
-        return physicalPageArray;
+    public int GetPID() {
+        return PID;
     }
 
-    public int[] FreeAllPages() {
-        VirtualToPhysicalMapping[] tempArray = new VirtualToPhysicalMapping[100];
-        int index = 0;
-        // Create temp array to generate array of appropriate size to hold required amount of physical pages
-        for (int i = 0; i < virtualToPhysicalPageMap.length; i++) {
-            if (virtualToPhysicalPageMap[i] != null) {
-                tempArray[index] = virtualToPhysicalPageMap[i];
-                index += 1;
-                virtualToPhysicalPageMap[i] = null;
-            }
+    public OS.Priority GetPriority() {
+        return priority;
+    }
+
+    public int[] Get_VFS_ID_Array() {
+        return VFS_ID_Array;
+    }
+
+    public int GetWakeUpTime() {
+        return wakeUpTime;
+    }
+
+    public boolean IsDone() {
+        if (thread_started == true && thread_stopped == true) {
+            return true;
         }
-        int[] physicalPageArray = new int[index];
-        for (int i = 0; i < index; i++) {
-            physicalPageArray[i] = tempArray[i].physicalPageNumber;
+        else {
+            return false;
         }
-        return physicalPageArray;
+    }
+
+    public boolean IsRunning() {
+        return thread.isAlive();
     }
 
     public void KillProcess() {
@@ -202,6 +175,15 @@ public class KernelandProcess {
         }
     }
 
+    public KernelMessage PopMessageQueue() {
+        if (!messageQueue.isEmpty()) {
+            return messageQueue.pop();
+        }
+        else {
+            return null;
+        }
+    }
+
     public void run() {
         if (thread_stopped == false) {
             // If running for the first time, start thread, otherwise, resume suspended thread.
@@ -212,6 +194,24 @@ public class KernelandProcess {
                 thread_started = true;
                 thread.start();
             }
+        }
+    }
+
+    public void SetPriority(OS.Priority priority) {
+        this.priority = priority;
+    }
+
+    public void Set_VFS_ID_Array(int[] inputArray) {
+        VFS_ID_Array = inputArray;
+    }
+
+    public void SetWakeUpTime(int wakeUpTime) {
+        this.wakeUpTime = wakeUpTime;
+    }
+
+    public void Stop() {
+        if (thread_started) {
+            thread.suspend();
         }
     }
 }

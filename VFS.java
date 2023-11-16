@@ -31,6 +31,10 @@ public class VFS implements Device {
         }
     }
 
+    public void Close(int id) {
+        VFS_devices.remove(id);
+    }
+
     public int Open(String s) {
         // String argument should contain 2 word
         String[] args = s.split(" ");
@@ -67,21 +71,11 @@ public class VFS implements Device {
         }
     }
 
-    public void Close(int id) {
-        VFS_devices.remove(id);
-    }
-
     public byte[] Read(int id, int size) {
         // Feed arguments into similar method within appropriate device
         Device_ID_Combination current_Combination = VFS_devices.get(id);
         Device current_Device = current_Combination.GetDevice();
         return current_Device.Read(current_Combination.GetID(), size);
-    }
-
-    public int Write(int id, byte[] data) {
-        Device_ID_Combination current_Combination = VFS_devices.get(id);
-        Device current_Device = current_Combination.GetDevice();
-        return current_Device.Write(current_Combination.GetID(), data);
     }
 
     public void Seek(int id, int to) {
@@ -90,4 +84,9 @@ public class VFS implements Device {
         current_Device.Seek(current_Combination.GetID(), to);
     }
 
+    public int Write(int id, byte[] data) {
+        Device_ID_Combination current_Combination = VFS_devices.get(id);
+        Device current_Device = current_Combination.GetDevice();
+        return current_Device.Write(current_Combination.GetID(), data);
+    }
 }
